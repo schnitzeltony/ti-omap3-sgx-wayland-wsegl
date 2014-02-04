@@ -265,6 +265,7 @@ int wayland_roundtrip(struct wl_egl_display *display)
     return ret;
 }
 
+static bool manual_update_supported = false;
 
 /* Initialize a native display for use with WSEGL */
 static WSEGLError wseglInitializeDisplay
@@ -307,6 +308,16 @@ static WSEGLError wseglInitializeDisplay
           wl_egl_display_destroy(egldisplay);
           close(fd);
           return WSEGL_CANNOT_INITIALISE; 
+       }
+       struct omapfb_caps fb_caps;
+       if (ioctl(fd, OMAPFB_GET_CAPS, &fb_caps) < 0) {
+          perror("OMAPFB_GET_CAPS");
+       }
+       else {
+	   wsegl_info("wayland-wsegl: fb caps: %08X", fb_caps.ctrl);
+	   if (fb_caps.ctrl & OMAPFB_CAPS_MANUAL_UPDATE) {
+	       manual_update_supported = true;
+           }
        }
        egldisplay->fd = fd;
        format = getwseglPixelFormat(egldisplay);
@@ -641,16 +652,18 @@ static WSEGLError wseglSwapDrawable
           (drawable->display->context, drawable->frontBufferPVRMEM, 1);                      
        assert (drawable->display->fd >= 0);
 
+       if(manual_update_supported)
+       {
+           struct omapfb_update_window update_window;
 
-       struct omapfb_update_window update_window;
-         
-       update_window.x = update_window.out_x = 0;
-       update_window.y = update_window.out_y = 0;
-       update_window.width = update_window.out_width = drawable->width;
-       update_window.height = update_window.out_height = drawable->height;
-       update_window.format = 0;
+           update_window.x = update_window.out_x = 0;
+           update_window.y = update_window.out_y = 0;
+           update_window.width = update_window.out_width = drawable->width;
+           update_window.height = update_window.out_height = drawable->height;
+           update_window.format = 0;
 
-       assert(ioctl(drawable->display->fd, OMAPFB_UPDATE_WINDOW, &update_window) == 0);
+           assert(ioctl(drawable->display->fd, OMAPFB_UPDATE_WINDOW, &update_window));
+        }
     }
     
     drawable->currentBackBuffer   
