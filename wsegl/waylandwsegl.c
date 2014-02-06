@@ -121,7 +121,11 @@ WL_EGL_EXPORT void
 wl_egl_display_destroy(struct wl_egl_display *egl_display)
 {
 	free(egl_display->device_name);
-	close(egl_display->fd);
+	if (egl_display->fd >= 1)
+	{
+		close(egl_display->fd);
+		egl_display->fd = -1;
+	}
 
 	free(egl_display);
 }
@@ -476,6 +480,14 @@ static WSEGLError wseglCreateWindowDrawable
         nativeWindow->width = nativeWindow->height = 8;
     }
 
+    /* close framebuffer in case we don't need it anymore */
+    if (egldisplay->fd >= 0 &&
+        (nativeWindow->numFlipBuffers || nativeWindow->display->display) )
+    {
+        wsegl_debug("closing unused framebuffer");
+        close (egldisplay->fd);
+        egldisplay->fd = -1;
+    }
 
     /* If we don't have back buffers allocated already */
     if (!(nativeWindow->backBuffers[0] && nativeWindow->backBuffersValid))
