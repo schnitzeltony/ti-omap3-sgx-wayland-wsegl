@@ -15,6 +15,9 @@
  *
  */
 
+/* back buffer sizes */
+#include "../wsegl/wsegl_buffer_sizes.h"
+
 /* EGL function pointers */
 #define EGL_EGLEXT_PROTOTYPES
 #include <EGL/egl.h>

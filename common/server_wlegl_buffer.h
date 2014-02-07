@@ -29,7 +29,6 @@
 extern "C" {
 #endif
 
-
 struct server_wlegl;
 struct server_wlegl_buffer;
 

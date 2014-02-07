@@ -62,6 +62,7 @@
 #include "wayland-sgx-server-protocol.h"
 #include "wayland-sgx-client-protocol.h"
 #include "server_wlegl_buffer.h"
+#include "wsegl_buffer_sizes.h"
 
 static WSEGLCaps const wseglDisplayCaps[] = {
     {WSEGL_CAP_WINDOWS_USE_HW_SYNC, 1},
@@ -380,14 +381,10 @@ static WSEGLError allocateBackBuffers(struct wl_egl_display *egldisplay, NativeW
         PVR2DGetFlipChainBuffers(egldisplay->context,
                                      nativeWindow->flipChain,
                                      &numBuffers,
-                                     nativeWindow->flipBuffers);
-        for (index = 0; index < numBuffers; ++index)
-        {
-             nativeWindow->backBuffers[index] = nativeWindow->flipBuffers[index];
-        }
+                                     nativeWindow->backBuffers);
     }
     else {
-	    for (index = 0; index < WAYLANDWSEGL_MAX_BACK_BUFFERS; ++index)
+	    for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; ++index)
 	    {
 		if (PVR2DMemAlloc(egldisplay->context,
 			      nativeWindow->strideBytes * nativeWindow->height,
@@ -461,11 +458,14 @@ static WSEGLError wseglCreateWindowDrawable
 
        if (displayInfo.ulMaxFlipChains > 0 && displayInfo.ulMaxBuffersInChain > 0)
               nativeWindow->numFlipBuffers = displayInfo.ulMaxBuffersInChain;
-       if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_MAX_FLIP_BUFFERS)
-              nativeWindow->numFlipBuffers = WAYLANDWSEGL_MAX_FLIP_BUFFERS;
+       if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_BACK_BUFFER_COUNT)
+              nativeWindow->numFlipBuffers = WAYLANDWSEGL_BACK_BUFFER_COUNT;
 
-       /* Workaround for broken devices, seen in debugging */
-       if (nativeWindow->numFlipBuffers < 2)
+       /* EGL_BUFFER_AGE_EXT is implemented in egl.c since we don't have a
+        * eglQuerySurface callback here. To make it work properly we must
+        * ensure that we support a certain number of back buffers
+        * (WAYLANDWSEGL_BACK_BUFFER_COUNT) for blitting/flipping case */
+       if (nativeWindow->numFlipBuffers < WAYLANDWSEGL_BACK_BUFFER_COUNT)
               nativeWindow->numFlipBuffers = 0;
     }
     else
@@ -501,7 +501,7 @@ static WSEGLError wseglCreateWindowDrawable
        /* Wayland window */  
        if (nativeWindow->display->display != NULL)
        {
-            for (index = 0; index < WAYLANDWSEGL_MAX_BACK_BUFFERS; index++)
+            for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; index++)
             {
               PVR2D_HANDLE name;
 
@@ -551,7 +551,7 @@ static WSEGLError wseglDeleteDrawable(WSEGLDrawableHandle _drawable)
     struct wl_egl_window *drawable = (struct wl_egl_window *) _drawable;
 
     int index;
-    int numBuffers = WAYLANDWSEGL_MAX_BACK_BUFFERS;
+    int numBuffers = WAYLANDWSEGL_BACK_BUFFER_COUNT;
 
     if (drawable->header.type == WWSEGL_DRAWABLE_TYPE_WINDOW) {
         for (index = 0; index < numBuffers; ++index) {
@@ -679,7 +679,7 @@ static WSEGLError wseglSwapDrawable
     }
     
     drawable->currentBackBuffer   
-      = (drawable->currentBackBuffer + 1) % WAYLANDWSEGL_MAX_BACK_BUFFERS;
+      = (drawable->currentBackBuffer + 1) % WAYLANDWSEGL_BACK_BUFFER_COUNT;
 
     return WSEGL_SUCCESS;
 }
@@ -720,8 +720,8 @@ static int wseglGetBuffers(struct wl_egl_window *drawable, PVR2DMEMINFO **source
       return 0;
   *render = drawable->backBuffers[drawable->currentBackBuffer];
   *source = drawable->backBuffers
-  [(drawable->currentBackBuffer + WAYLANDWSEGL_MAX_BACK_BUFFERS - 1) %
-                 WAYLANDWSEGL_MAX_BACK_BUFFERS];
+  [(drawable->currentBackBuffer + WAYLANDWSEGL_BACK_BUFFER_COUNT - 1) %
+                 WAYLANDWSEGL_BACK_BUFFER_COUNT];
   return 1;
 }                                                   
 

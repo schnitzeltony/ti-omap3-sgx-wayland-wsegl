@@ -23,6 +23,8 @@
 #ifndef SERVER_WLEGL_H
 #define SERVER_WLEGL_H
 
+#include "../wsegl/wsegl_buffer_sizes.h"
+
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 

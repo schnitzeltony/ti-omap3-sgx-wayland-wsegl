@@ -22,6 +22,9 @@
 
 #include <string.h>
 
+/* back buffer sizes */
+#include "../wsegl/wsegl_buffer_sizes.h"
+
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
