@@ -23,9 +23,12 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
+/* TI headers don't define these */
 #ifndef EGL_WAYLAND_BUFFER_WL
-/* TI headers don't define this */
 #define EGL_WAYLAND_BUFFER_WL    0x31D5 /* eglCreateImageKHR target */
+#endif
+#ifndef EGL_BUFFER_AGE_EXT
+#define EGL_BUFFER_AGE_EXT       0x313D /* eglQuerySurface attribute */
 #endif
 
 #include <dlfcn.h>
@@ -160,7 +163,7 @@ const char * eglQueryString(EGLDisplay dpy, EGLint name)
 		const char *ret = (*_eglQueryString)(dpy, name);
 		static char eglextensionsbuf[512];
 		assert(ret != NULL);
-		snprintf(eglextensionsbuf, 510, "%sEGL_WL_bind_wayland_display ", ret);
+		snprintf(eglextensionsbuf, 510, "%sEGL_WL_bind_wayland_display EGL_EXT_buffer_age ", ret);
 		ret = eglextensionsbuf;
 		return ret;
 	}
@@ -193,12 +196,24 @@ EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
 			attribute, value);
 }
 
+static int buffer_age[WAYLANDWSEGL_BACK_BUFFER_COUNT];
+static int currentBackBuffer;
+
 EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 		EGLNativeWindowType win,
 		const EGLint *attrib_list)
 {
+	int index;
+
 	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
-	return (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+	EGLSurface surface = (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
+	/* buffers were created in the callback wseglCreateWindowDrawable
+	 * reset their ages */
+	for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; ++index)
+		buffer_age[index] = 0;
+	/* see allocateBackBuffers */
+	currentBackBuffer = 0;
+	return surface;
 }
 
 EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
@@ -225,6 +240,11 @@ EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
 		EGLint attribute, EGLint *value)
 {
+	if (attribute == EGL_BUFFER_AGE_EXT)
+	{
+		*value = buffer_age[currentBackBuffer];
+		return EGL_TRUE;
+	}
 	EGL_DLSYM(&_eglQuerySurface, "eglQuerySurface");
 	return (*_eglQuerySurface)(dpy, surface, attribute, value);
 }
@@ -347,8 +367,20 @@ EGLBoolean eglWaitNative(EGLint engine)
 
 EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 {
+	int index;
+
 	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
-	return (*_eglSwapBuffers)(dpy, surface);
+	EGLBoolean ret = (*_eglSwapBuffers)(dpy, surface);
+	if (ret == EGL_TRUE)
+	{
+		for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; ++index)
+			if(buffer_age[index] > 0)
+				++buffer_age[index];
+		buffer_age[currentBackBuffer] = 1;
+		++currentBackBuffer;
+		currentBackBuffer %= WAYLANDWSEGL_BACK_BUFFER_COUNT;
+	}
+	return ret;
 }
 
 EGLBoolean eglCopyBuffers(EGLDisplay dpy, EGLSurface surface,
