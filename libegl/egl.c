@@ -198,6 +198,9 @@ EGLBoolean eglGetConfigAttrib(EGLDisplay dpy, EGLConfig config,
 	return (*_eglGetConfigAttrib)(dpy, config,
 			attribute, value);
 }
+#ifndef WAYLANDWSEGL_BACK_BUFFER_COUNT
+#error "WAYLANDWSEGL_BACK_BUFFER_COUNT not defined"
+#endif
 
 static int buffer_age[WAYLANDWSEGL_BACK_BUFFER_COUNT];
 static int currentBackBuffer;
@@ -206,6 +209,8 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 		EGLNativeWindowType win,
 		const EGLint *attrib_list)
 {
+	wsegl_debug("eglCreateWindowSurface: %d %d %d", dpy, config, win);
+
 	int index;
 
 	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
@@ -222,6 +227,7 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 EGLSurface eglCreatePbufferSurface(EGLDisplay dpy, EGLConfig config,
 		const EGLint *attrib_list)
 {
+	wsegl_debug("eglCreatePbufferSurface: %d %d", dpy, config);
 	EGL_DLSYM(&_eglCreatePbufferSurface, "eglCreatePbufferSurface");
 	return (*_eglCreatePbufferSurface)(dpy, config, attrib_list);
 }
@@ -230,12 +236,14 @@ EGLSurface eglCreatePixmapSurface(EGLDisplay dpy, EGLConfig config,
 		EGLNativePixmapType pixmap,
 		const EGLint *attrib_list)
 {
+	wsegl_debug("eglCreatePixmapSurface, %d %d %d", dpy, config, pixmap);
 	EGL_DLSYM(&_eglCreatePixmapSurface, "eglCreatePixmapSurface");
 	return (*_eglCreatePixmapSurface)(dpy, config, pixmap, attrib_list);
 }
 
 EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 {
+	wsegl_debug("eglDestroySurface, %d %d", dpy, surface);
 	EGL_DLSYM(&_eglDestroySurface, "eglDestroySurface");
 	return (*_eglDestroySurface)(dpy, surface);
 }
@@ -243,9 +251,11 @@ EGLBoolean eglDestroySurface(EGLDisplay dpy, EGLSurface surface)
 EGLBoolean eglQuerySurface(EGLDisplay dpy, EGLSurface surface,
 		EGLint attribute, EGLint *value)
 {
+	wsegl_debug("eglQuerySurface, %d %d %x", dpy, surface, attribute);
 	if (attribute == EGL_BUFFER_AGE_EXT)
 	{
 		*value = buffer_age[currentBackBuffer];
+		wsegl_debug("eglQuerySurface(EGL_BUFFER_AGE_EXT), val: %d curr %d", *value, currentBackBuffer);
 		return EGL_TRUE;
 	}
 	EGL_DLSYM(&_eglQuerySurface, "eglQuerySurface");
@@ -281,6 +291,7 @@ EGLSurface eglCreatePbufferFromClientBuffer(
 		EGLDisplay dpy, EGLenum buftype, EGLClientBuffer buffer,
 		EGLConfig config, const EGLint *attrib_list)
 {
+	wsegl_debug("eglCreatePbufferFromClientBuffer, %d %d %d %d", dpy, buftype, buffer, config);
 	EGL_DLSYM(&_eglCreatePbufferFromClientBuffer, "eglCreatePbufferFromClientBuffer");
 	return (*_eglCreatePbufferFromClientBuffer)(dpy, buftype, buffer, config, attrib_list);
 }
@@ -314,12 +325,14 @@ EGLContext eglCreateContext(EGLDisplay dpy, EGLConfig config,
 		EGLContext share_context,
 		const EGLint *attrib_list)
 {
+	wsegl_debug("eglCreateContext, %d %d %d %d", dpy, config, share_context);
 	EGL_DLSYM(&_eglCreateContext, "eglCreateContext");
 	return (*_eglCreateContext)(dpy, config, share_context, attrib_list);
 }
 
 EGLBoolean eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 {
+	wsegl_debug("eglDestroyContext, %d %d", dpy, ctx);
 	EGL_DLSYM(&_eglDestroyContext, "eglDestroyContext");
 	return (*_eglDestroyContext)(dpy, ctx);
 }
@@ -327,6 +340,7 @@ EGLBoolean eglDestroyContext(EGLDisplay dpy, EGLContext ctx)
 EGLBoolean eglMakeCurrent(EGLDisplay dpy, EGLSurface draw,
 		EGLSurface read, EGLContext ctx)
 {
+	wsegl_debug("eglMakeCurrent, %d %d %d %d", dpy, draw, read, ctx);
 	EGL_DLSYM(&_eglMakeCurrent, "eglMakeCurrent");
 	return (*_eglMakeCurrent)(dpy, draw, read, ctx);
 }
@@ -352,6 +366,7 @@ EGLDisplay eglGetCurrentDisplay(void)
 EGLBoolean eglQueryContext(EGLDisplay dpy, EGLContext ctx,
 		EGLint attribute, EGLint *value)
 {
+	wsegl_debug("eglQueryContext, %d %d %x", dpy, ctx, attribute);
 	EGL_DLSYM(&_eglQueryContext, "eglQueryContext");
 	return (*_eglQueryContext)(dpy, ctx, attribute, value);
 }
@@ -374,14 +389,17 @@ EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 
 	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
 	EGLBoolean ret = (*_eglSwapBuffers)(dpy, surface);
+	wsegl_debug("eglSwapBuffers, %d %d return %d", dpy, surface, ret);
 	if (ret == EGL_TRUE)
 	{
 		for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; ++index)
 			if(buffer_age[index] > 0)
 				++buffer_age[index];
 		buffer_age[currentBackBuffer] = 1;
+		wsegl_debug("currentBackBuffer %d", currentBackBuffer);
 		++currentBackBuffer;
 		currentBackBuffer %= WAYLANDWSEGL_BACK_BUFFER_COUNT;
+		wsegl_debug("Updated buffer ages, curr %d Buff0 %d Buff1 %d", currentBackBuffer, buffer_age[0], buffer_age[1]);
 	}
 	return ret;
 }
@@ -426,6 +444,7 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 		/* rebuild without EGL_WAYLAND_PLANE_WL */
 		if (found_EGL_WAYLAND_PLANE_WL && attribs_count >= 2)
 			attribs_count -= 2;
+		wsegl_debug("before removal EGL_WAYLAND_PLANE_WL attribs_count: %d", attribs_count);
 		EGLint *attrib_list_new = malloc(sizeof(EGLint *) * (attribs_count+1)); /* terminate with EGL_NONE */
 		assert(attrib_list_new != NULL);
 		for(attrib_source = attrib_list, attrib_dest = attrib_list_new;
@@ -439,13 +458,18 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 			}
 			else
 			{
+				wsegl_debug("adding attribute");
 				*attrib_dest = *attrib_source;
 				++attrib_dest;
 			}
 		}
+		wsegl_debug("adding final attribute");
 		*attrib_dest = EGL_NONE;
+		wsegl_debug("after removal EGL_WAYLAND_PLANE_WL");
 
+		wsegl_debug("before eglCreateImageKHR");
 		EGLImageKHR ret = (*_eglCreateImageKHR)(dpy, EGL_NO_CONTEXT, EGL_NATIVE_PIXMAP_KHR, buffer, attrib_list_new);
+		wsegl_debug("after eglCreateImageKHR");
 		free(attrib_list_new);
 		return ret;
 	}

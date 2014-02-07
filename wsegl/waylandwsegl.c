@@ -277,6 +277,7 @@ static WSEGLError wseglInitializeDisplay
     (NativeDisplayType nativeDisplay, WSEGLDisplayHandle *display,
      const WSEGLCaps **caps, WSEGLConfig **configs)
 {
+    wsegl_debug("wseglInitializeDisplay, %d", display);
     struct wl_egl_display *egldisplay = wl_egl_display_create((struct wl_display *) nativeDisplay);
 
     if (wseglFetchContext(egldisplay) != 1)
@@ -351,6 +352,7 @@ static WSEGLError wseglInitializeDisplay
 /* Close the WSEGL display */
 static WSEGLError wseglCloseDisplay(WSEGLDisplayHandle display)
 {
+   wsegl_debug("wseglCloseDisplay, %d", display);
    struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
    wseglReleaseContext(egldisplay);
    assert(egldisplay->context == 0);
@@ -430,6 +432,7 @@ static WSEGLError wseglCreateWindowDrawable
      WSEGLDrawableHandle *drawable, NativeWindowType nativeWindow,
      WSEGLRotationAngle *rotationAngle)
 {
+    wsegl_debug("wseglCreateWindowDrawable, %d %d %d %d %d", display, config, drawable, nativeWindow, rotationAngle);
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
     int index;
     /* Framebuffer */
@@ -531,6 +534,7 @@ static WSEGLError wseglCreatePixmapDrawable
      WSEGLDrawableHandle *drawable, NativePixmapType nativePixmap,
      WSEGLRotationAngle *rotationAngle)
 {
+    wsegl_debug("wseglCreatePixmapDrawable, %d %d %d %d %d", display, config, drawable, nativePixmap, rotationAngle);
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
     struct server_wlegl_buffer *buffer = (struct server_wlegl_buffer *)nativePixmap;
 
@@ -549,6 +553,7 @@ static WSEGLError wseglCreatePixmapDrawable
 static WSEGLError wseglDeleteDrawable(WSEGLDrawableHandle _drawable)
 {
     struct wl_egl_window *drawable = (struct wl_egl_window *) _drawable;
+    wsegl_debug("wseglDeleteDrawable, %d", drawable);
 
     int index;
     int numBuffers = WAYLANDWSEGL_BACK_BUFFER_COUNT;
@@ -595,6 +600,7 @@ static WSEGLError wseglSwapDrawable
     struct wl_egl_window *drawable = (struct wl_egl_window *) _drawable;
     struct wl_callback *callback;
 
+    wsegl_debug("wseglSwapDrawable, %d %d", drawable, data);
     if (drawable->numFlipBuffers)
     {
 //        wsegl_info("PRESENT FLIP");
@@ -680,6 +686,7 @@ static WSEGLError wseglSwapDrawable
     
     drawable->currentBackBuffer   
       = (drawable->currentBackBuffer + 1) % WAYLANDWSEGL_BACK_BUFFER_COUNT;
+    wsegl_debug("Back buffer changed to %d", drawable->currentBackBuffer);
 
     return WSEGL_SUCCESS;
 }
