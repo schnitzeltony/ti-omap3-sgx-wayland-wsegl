@@ -21,6 +21,7 @@
  */
 
 #include <string.h>
+#include "wsegl_buffer_sizes.h"
 
 #include <EGL/egl.h>
 #include <EGL/eglext.h>

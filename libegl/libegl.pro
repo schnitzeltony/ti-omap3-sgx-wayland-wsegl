@@ -2,7 +2,7 @@ TEMPLATE = lib
 TARGET = EGL
 
 QT = 
-SOURCES = egl.c
+SOURCES = egl.cpp
 
 
 include(../common/common.pri)

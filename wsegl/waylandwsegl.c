@@ -62,6 +62,7 @@
 #include "wayland-sgx-server-protocol.h"
 #include "wayland-sgx-client-protocol.h"
 #include "server_wlegl_buffer.h"
+#include "wsegl_buffer_sizes.h"
 
 static WSEGLCaps const wseglDisplayCaps[] = {
     {WSEGL_CAP_WINDOWS_USE_HW_SYNC, 1},
@@ -193,6 +194,7 @@ static PVR2DFORMAT wsegl2pvr2dformat(WSEGLPixelFormat format)
 /* Determine if nativeDisplay is a valid display handle */
 static WSEGLError wseglIsDisplayValid(NativeDisplayType nativeDisplay)
 {
+  wsegl_info("wseglIsDisplayValid called %d", nativeDisplay);
   return WSEGL_SUCCESS;
 }
 
@@ -228,7 +230,7 @@ static void registry_handle_global(void *data, struct wl_registry *registry, uin
     const char *interface, uint32_t version)
 {
     struct wl_egl_display *egldisplay = (struct wl_egl_display *)data;
-
+    wsegl_info("registry_handle_global called for interface %s", interface);
     if (strcmp(interface, "sgx_wlegl") == 0) {
         egldisplay->sgx_wlegl = (struct sgx_wlegl *)wl_registry_bind(registry, name, &sgx_wlegl_interface, 1);
     }
@@ -364,14 +366,10 @@ static WSEGLError allocateBackBuffers(struct wl_egl_display *egldisplay, NativeW
         PVR2DGetFlipChainBuffers(egldisplay->context,
                                      nativeWindow->flipChain,
                                      &numBuffers,
-                                     nativeWindow->flipBuffers);
-        for (index = 0; index < numBuffers; ++index)
-        {
-             nativeWindow->backBuffers[index] = nativeWindow->flipBuffers[index];
-        }
+                                     nativeWindow->backBuffers);
     }
     else {
-	    for (index = 0; index < WAYLANDWSEGL_MAX_BACK_BUFFERS; ++index)
+	    for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; ++index)
 	    {
 		if (PVR2DMemAlloc(egldisplay->context,
 			      nativeWindow->strideBytes * nativeWindow->height,
@@ -418,6 +416,7 @@ static WSEGLError wseglCreateWindowDrawable
      WSEGLRotationAngle *rotationAngle)
 {
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
+    wsegl_info("wseglCreateWindowDrawable called drawable %d win %d", *drawable, nativeWindow);
     int index;
     /* Framebuffer */
     if (nativeWindow == NULL)
@@ -445,11 +444,14 @@ static WSEGLError wseglCreateWindowDrawable
 
        if (displayInfo.ulMaxFlipChains > 0 && displayInfo.ulMaxBuffersInChain > 0)
               nativeWindow->numFlipBuffers = displayInfo.ulMaxBuffersInChain;
-       if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_MAX_FLIP_BUFFERS)
-              nativeWindow->numFlipBuffers = WAYLANDWSEGL_MAX_FLIP_BUFFERS;
+       if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_BACK_BUFFER_COUNT)
+              nativeWindow->numFlipBuffers = WAYLANDWSEGL_BACK_BUFFER_COUNT;
 
-       /* Workaround for broken devices, seen in debugging */
-       if (nativeWindow->numFlipBuffers < 2)
+       /* EGL_BUFFER_AGE_EXT is implemented in egl.c since we don't have a
+        * eglQuerySurface callback here. To make it work properly we must
+        * ensure that we support a certain number of back buffers
+        * (WAYLANDWSEGL_BACK_BUFFER_COUNT) for blitting/flipping case */
+       if (nativeWindow->numFlipBuffers < WAYLANDWSEGL_BACK_BUFFER_COUNT)
               nativeWindow->numFlipBuffers = 0;
     }
     else
@@ -477,7 +479,7 @@ static WSEGLError wseglCreateWindowDrawable
        /* Wayland window */  
        if (nativeWindow->display->display != NULL)
        {
-            for (index = 0; index < WAYLANDWSEGL_MAX_BACK_BUFFERS; index++)
+            for (index = 0; index < WAYLANDWSEGL_BACK_BUFFER_COUNT; index++)
             {
               PVR2D_HANDLE name;
 
@@ -501,12 +503,13 @@ static WSEGLError wseglCreateWindowDrawable
     return WSEGL_SUCCESS;
 }
 
-/* Create the WSEGL drawable version of a native pixmap */
+/* Create the WSEGL drawable version of a native pixmap (called by eglCreateImageKHR) */
 static WSEGLError wseglCreatePixmapDrawable
     (WSEGLDisplayHandle display, WSEGLConfig *config,
      WSEGLDrawableHandle *drawable, NativePixmapType nativePixmap,
      WSEGLRotationAngle *rotationAngle)
 {
+    wsegl_info("wseglCreatePixmapDrawable called: drawable %d nativePixmap %d", drawable, nativePixmap);
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
     struct server_wlegl_buffer *buffer = (struct server_wlegl_buffer *)nativePixmap;
 
@@ -518,6 +521,7 @@ static WSEGLError wseglCreatePixmapDrawable
     assert(PVR2DMemMap(egldisplay->context, 0, (void *)pixmap->handle, &pixmap->pvrmem) == PVR2D_OK);
     *drawable = (WSEGLDrawableHandle) pixmap;
     *rotationAngle = WSEGL_ROTATE_0;
+    wsegl_info("wseglCreatePixmapDrawable returns: drawable %d nativePixmap %d pixmap %d", drawable, nativePixmap, pixmap);
     return WSEGL_SUCCESS;
 }
 
@@ -527,9 +531,11 @@ static WSEGLError wseglDeleteDrawable(WSEGLDrawableHandle _drawable)
     struct wl_egl_window *drawable = (struct wl_egl_window *) _drawable;
 
     int index;
-    int numBuffers = WAYLANDWSEGL_MAX_BACK_BUFFERS;
+    int numBuffers = WAYLANDWSEGL_BACK_BUFFER_COUNT;
 
+    wsegl_info("wseglDeleteDrawable called %d / %d", *drawable, drawable);
     if (drawable->header.type == WWSEGL_DRAWABLE_TYPE_WINDOW) {
+	wsegl_info("wseglDeleteDrawable Window called %d / %d", *drawable, drawable);
         for (index = 0; index < numBuffers; ++index) {
             if (drawable->drmbuffers[index])
                 wl_buffer_destroy(drawable->drmbuffers[index]);
@@ -540,21 +546,23 @@ static WSEGLError wseglDeleteDrawable(WSEGLDrawableHandle _drawable)
         memset(drawable->drmbuffers, 0, sizeof(drawable->drmbuffers));
         memset(drawable->backBuffers, 0, sizeof(drawable->backBuffers));
         drawable->backBuffersValid = 0;
-        return WSEGL_SUCCESS;
     } else if (drawable->header.type == WWSEGL_DRAWABLE_TYPE_PIXMAP) {
         struct wl_egl_pixmap *pixmap = (struct wl_egl_pixmap *)drawable;
+	wsegl_info("wseglDeleteDrawable Pixmap called pixmap %d", pixmap);
         PVR2DMemFree(pixmap->display->context, pixmap->pvrmem);
     } else {
+	wsegl_info("wseglDeleteDrawable Unknown called %d / %d", *drawable, drawable);
         assert(0);
     }
 
+    wsegl_info("wseglDeleteDrawable returns %d / %d", *drawable, drawable);
     return WSEGL_SUCCESS;
 }
 
 static void
 wayland_frame_callback(void *data, struct wl_callback *callback, uint32_t time)
 {
-    //wsegl_info("wayland-wsegl: wayland_frame_callback");
+    wsegl_info("wayland-wsegl: wayland_frame_callback");
     struct wl_egl_window *drawable = (struct wl_egl_window *)data;
     drawable->display->frame_callback = NULL;
     wl_callback_destroy(callback);
@@ -571,6 +579,7 @@ static WSEGLError wseglSwapDrawable
     struct wl_egl_window *drawable = (struct wl_egl_window *) _drawable;
     struct wl_callback *callback;
 
+    wsegl_info("wseglSwapDrawable called: drawable %d", drawable);
     if (drawable->numFlipBuffers)
     {
 //        wsegl_info("PRESENT FLIP");
@@ -611,6 +620,9 @@ static WSEGLError wseglSwapDrawable
         wl_surface_attach(drawable->surface, wlbuf, 0, 0); 
         wl_surface_damage(drawable->surface, 0, 0, drawable->width, drawable->height);
         wl_surface_commit(drawable->surface);
+        // No double buffering for wayland windows
+	wsegl_info("wseglSwapDrawable wayland returns: drawable %d", drawable);
+        return WSEGL_SUCCESS;
     }
     else
     {
@@ -652,8 +664,9 @@ static WSEGLError wseglSwapDrawable
     }
     
     drawable->currentBackBuffer   
-      = (drawable->currentBackBuffer + 1) % WAYLANDWSEGL_MAX_BACK_BUFFERS;
+      = (drawable->currentBackBuffer + 1) % WAYLANDWSEGL_BACK_BUFFER_COUNT;
 
+    wsegl_info("wseglSwapDrawable EGL returns: drawable %d", drawable);
     return WSEGL_SUCCESS;
 }
 
@@ -693,8 +706,8 @@ static int wseglGetBuffers(struct wl_egl_window *drawable, PVR2DMEMINFO **source
       return 0;
   *render = drawable->backBuffers[drawable->currentBackBuffer];
   *source = drawable->backBuffers
-  [(drawable->currentBackBuffer + WAYLANDWSEGL_MAX_BACK_BUFFERS - 1) %
-                 WAYLANDWSEGL_MAX_BACK_BUFFERS];
+  [(drawable->currentBackBuffer + WAYLANDWSEGL_BACK_BUFFER_COUNT - 1) %
+                 WAYLANDWSEGL_BACK_BUFFER_COUNT];
   return 1;
 }                                                   
 
@@ -782,14 +795,14 @@ static WSEGLError wseglGetDrawableParameters
 }
 
 
-/* Function stub for ConnectDrawable() */
+/* Function stub for ConnectDrawable() caused by eglMakeCurrent */
 static WSEGLError wseglConnectDrawable(WSEGLDrawableHandle hDrawable)
 {
     WSEGL_UNREFERENCED_PARAMETER(hDrawable);
     return WSEGL_SUCCESS;
 }
 
-/* Function stub for DisconnectDrawable() */
+/* Function stub for DisconnectDrawable() caused by eglMakeCurrent */
 static WSEGLError wseglDisconnectDrawable(WSEGLDrawableHandle hDrawable)
 {
     WSEGL_UNREFERENCED_PARAMETER(hDrawable);
@@ -797,8 +810,10 @@ static WSEGLError wseglDisconnectDrawable(WSEGLDrawableHandle hDrawable)
 }
 
 /* Function stub for FlagStartFrame() */
+/* Indicates that there have been rendering commands submitted by a client driver */
 static WSEGLError wseglFlagStartFrame(void)
 {
+    wsegl_info("wseglFlagStartFrame called");
     return WSEGL_SUCCESS;
 }
 

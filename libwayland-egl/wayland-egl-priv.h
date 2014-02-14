@@ -42,6 +42,7 @@ extern "C" {
 #define WL_EGL_EXPORT
 #endif
 
+#include "wsegl_buffer_sizes.h"
 #include <stdbool.h>
 #include <wayland-client.h>
 #include <pvr2d.h>
@@ -53,9 +54,6 @@ typedef struct wl_egl_window* NativeWindowType;
 
 #include "wayland-sgx-server-protocol.h"
 #include "wsegl.h"
-
-#define WAYLANDWSEGL_MAX_BACK_BUFFERS     2
-#define WAYLANDWSEGL_MAX_FLIP_BUFFERS 	  2
 
 enum WWSEGL_DRAWABLE_TYPE
 {
@@ -107,13 +105,12 @@ struct wl_egl_window {
 
 	WSEGLPixelFormat   format;
 	PVR2DMEMINFO	   *frontBufferPVRMEM;
-	PVR2DMEMINFO       *backBuffers[WAYLANDWSEGL_MAX_BACK_BUFFERS];
-	struct wl_buffer   *drmbuffers[WAYLANDWSEGL_MAX_BACK_BUFFERS];
+	PVR2DMEMINFO       *backBuffers[WAYLANDWSEGL_BACK_BUFFER_COUNT];
+	struct wl_buffer   *drmbuffers[WAYLANDWSEGL_BACK_BUFFER_COUNT];
 	int                numFlipBuffers;
 	PVR2DFLIPCHAINHANDLE flipChain;
-    PVR2DMEMINFO       *flipBuffers[WAYLANDWSEGL_MAX_FLIP_BUFFERS];
 
-    PVR2D_HANDLE exporthandles[WAYLANDWSEGL_MAX_BACK_BUFFERS];
+	PVR2D_HANDLE        exporthandles[WAYLANDWSEGL_BACK_BUFFER_COUNT];
 	
 	int                 currentBackBuffer;
 	int                 backBuffersValid;
