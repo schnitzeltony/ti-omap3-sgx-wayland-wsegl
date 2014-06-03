@@ -39,6 +39,8 @@ fi
 AC_CONFIG_FILES([Makefile
 		libegl/Makefile
 		libegl/egl.pc
+		libgbm/Makefile
+		libgbm/gbm.pc
 		libwayland-egl/Makefile
 		libwayland-egl/wayland-egl.pc
 		wsegl/Makefile])

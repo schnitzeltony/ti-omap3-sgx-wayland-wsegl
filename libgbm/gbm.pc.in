@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: gbm
+Description: gbm library
+Requires.private: libudev
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lgbm
+Libs.private: -ldl
+Cflags: -I${includedir}/gbm
