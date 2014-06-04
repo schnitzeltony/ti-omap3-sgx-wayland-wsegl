@@ -5,6 +5,7 @@ lib_LTLIBRARIES = libgbm.la
 AUTOMAKE_OPTIONS = subdir-objects
 
 libgbm_la_SOURCES =	\
+	$(top_srcdir)/common/log.c \
 	gbm.c		\
 	backend.c	\
 	common.c
@@ -13,6 +14,7 @@ libgbm_la_LIBADD =	\
 	@UDEV_LIBS@
 
 libgbm_la_CFLAGS =	\
+	-I$(top_srcdir)/common	\
 	@UDEV_CFLAGS@	\
 	-D_OS_UNIX=1	\
 	-DMODULEDIR='"$(gbmdir)"'
@@ -31,7 +33,6 @@ gbm_LTLIBRARIES = gbm_pvr_omap3.la
 
 gbm_pvr_omap3_la_SOURCES =	\
 	$(top_srcdir)/common/log.c \
-	$(top_srcdir)/common/log.h \
 	backend_pvr_omap3.c
 
 gbm_pvr_omap3_la_CFLAGS =	\

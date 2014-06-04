@@ -41,6 +41,7 @@
 #include "gbm.h"
 #include "gbmint.h"
 #include "backend.h"
+#include "log.h"
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
@@ -142,6 +143,7 @@ _gbm_mesa_get_device(int fd)
 GBM_EXPORT struct gbm_device *
 gbm_create_device(int fd)
 {
+   wsegl_debug("gbm_create_device %i called.", fd);
    struct gbm_device *gbm = NULL;
    struct stat buf;
 
