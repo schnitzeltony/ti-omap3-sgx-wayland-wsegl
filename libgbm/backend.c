@@ -36,16 +36,12 @@
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 
-extern const struct gbm_backend gbm_dri_backend;
-
 struct backend_desc {
    const char *name;
    const struct gbm_backend *builtin;
 };
 
 static const struct backend_desc backends[] = {
-   { "gbm_dri.so", &gbm_dri_backend },
-   { "gbm_gallium_drm.so", NULL },
    { "gbm_pvr_omap3.so", NULL },
 };
 
