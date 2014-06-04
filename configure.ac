@@ -21,11 +21,15 @@ AC_SUBST([MESA_VERSION])
 
 # Checks for all headers/libraries/packages we need
 AC_CHECK_HEADERS([EGL/egl.h EGL/eglext.h pvr2d.h wsegl.h])
+
 AC_CHECK_LIB([pvr2d], [PVR2DEnumerateDevices], [PVR2D_LIB=-lpvr2d])
+AC_SUBST([PVR2D_LIB])
+
 PKG_CHECK_MODULES(UDEV, libudev)
 PKG_CHECK_MODULES(DRM, libdrm)
 PKG_CHECK_MODULES(WAYLAND_CLIENT, wayland-client)
 PKG_CHECK_MODULES(WAYLAND_SERVER, wayland-server)
+
 AC_PATH_PROG([wayland_scanner], [wayland-scanner])
 if test x$wayland_scanner = x; then
 	AC_MSG_ERROR([wayland-scanner is needed to compile wayland-egl and wsegl])
