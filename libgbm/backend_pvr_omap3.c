@@ -19,6 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
+ * Based on https://github.com/robclark/libgbm/blob/master/backend_example.c
  * Authors:
  *    Andreas Müller <schnitzeltony@googlemail.com>
  */
@@ -34,24 +35,8 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
-#include "gbmint.h"
-#include "common_drm.h"
+#include "gbm_pvr_omap3_int.h"
 
-struct gbm_pvr_omap3_surface {
-   struct gbm_surface base;
-
-   void *pvr_omap3_private;
-};
-
-struct gbm_pvr_omap3_device {
-   struct gbm_drm_device base;
-   /* add whatever you need here */
-};
-
-struct gbm_pvr_omap3_bo {
-   struct gbm_drm_bo base;
-   /* add whatever you need here */
-};
 
 
 static int
@@ -260,7 +245,7 @@ gbm_pvr_omap3_surface_create(struct gbm_device *gbm,
 static void
 gbm_pvr_omap3_surface_destroy(struct gbm_surface *_surf)
 {
-   struct gbm_pvr_omap3_surface *surf = (struct gbm_pvr_omap3_surface*) _surf;
+   struct gbm_pvr_omap3_surface *surf = gbm_pvr_omap3_surface(_surf);
 
    free(surf);
 }
