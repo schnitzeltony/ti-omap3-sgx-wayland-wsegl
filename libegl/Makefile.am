@@ -10,7 +10,7 @@ libEGL_la_CFLAGS = 		\
 	-I$(top_srcdir)/common
 
 libEGL_la_LDFLAGS = 		\
-	-version-number @MESA_VERSION_MAJOR@:@MESA_VERSION_MINOR@:@MESA_VERSION_PATCH@
+	-version-info 1
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = egl.pc

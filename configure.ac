@@ -15,13 +15,9 @@ AC_PROG_LIBTOOL
 AC_PROG_CC
 AC_PROG_CXX
 
-# weston requires mesa version for wayland-egl
-MESA_VERSION_MAJOR=10
-MESA_VERSION_MINOR=1
-MESA_VERSION_PATCH=2
-AC_SUBST([MESA_VERSION_MAJOR])
-AC_SUBST([MESA_VERSION_MINOR])
-AC_SUBST([MESA_VERSION_PATCH])
+# weston requires mesa version for egl
+MESA_VERSION=10.1.3
+AC_SUBST([MESA_VERSION])
 
 # Checks for all headers/libraries/packages we need
 AC_CHECK_HEADERS([EGL/egl.h EGL/eglext.h pvr2d.h wsegl.h])

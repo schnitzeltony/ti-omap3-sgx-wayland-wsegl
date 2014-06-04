@@ -4,7 +4,7 @@ includedir=@includedir@
 
 Name: wayland-egl
 Description: SGX wayland-egl library
-Version: @MESA_VERSION_MAJOR@.@MESA_VERSION_MINOR@.@MESA_VERSION_PATCH@
+Version: @PACKAGE_VERSION@
 Requires: wayland-server wayland-client
 Libs: -L${libdir} -lwayland-egl -lwayland-client -lwayland-server -lpvr2d
 Cflags: -I${includedir}
