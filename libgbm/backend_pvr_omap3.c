@@ -36,8 +36,7 @@
 #include <dlfcn.h>
 
 #include "gbm_pvr_omap3_int.h"
-
-
+#include "log.h"
 
 static int
 gles_init(struct gbm_pvr_omap3_device *dev)
@@ -258,6 +257,7 @@ gbm_pvr_omap3_destroy(struct gbm_device *gbm)
 static struct gbm_device *
 pvr_omap3_device_create(int fd)
 {
+   wsegl_debug("Initialising pvr_omap3 gbm device.");
    struct gbm_pvr_omap3_device *dev;
    int ret;
 

@@ -2,6 +2,8 @@ gbmdir = $(libdir)/gbm
 
 lib_LTLIBRARIES = libgbm.la
 
+AUTOMAKE_OPTIONS = subdir-objects
+
 libgbm_la_SOURCES =	\
 	gbm.c		\
 	backend.c	\
@@ -27,15 +29,18 @@ pkgconfig_DATA = gbm.pc
 
 gbm_LTLIBRARIES = gbm_pvr_omap3.la
 
-gbm_pvr_omap3_la_SOURCES = \
+gbm_pvr_omap3_la_SOURCES =	\
+	$(top_srcdir)/common/log.c \
+	$(top_srcdir)/common/log.h \
 	backend_pvr_omap3.c
 
-gbm_pvr_omap3_la_CFLAGS = \
-	$(AM_CFLAGS) \
+gbm_pvr_omap3_la_CFLAGS =	\
+	-I$(top_srcdir)/common	\
+	$(AM_CFLAGS) 		\
 	$(LIBDRM_CFLAGS)
 
-gbm_pvr_omap3_la_LDFLAGS = \
-	-module		\
-	-no-undefined 	\
+gbm_pvr_omap3_la_LDFLAGS =	\
+	-module			\
+	-no-undefined		\
 	-avoid-version
 
