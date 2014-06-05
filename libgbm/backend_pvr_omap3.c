@@ -36,7 +36,7 @@
 #include <dlfcn.h>
 
 #include "gbm_pvr_omap3_int.h"
-#include "log.h"
+#include "wlwsegl-log.h"
 
 static int
 gles_init(struct gbm_pvr_omap3_device *dev)

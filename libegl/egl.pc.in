@@ -5,8 +5,7 @@ includedir=@includedir@
 
 Name: egl
 Description: OMAP EGL library
-Requires.private: 
 Version: @MESA_VERSION@
 Libs: -L${libdir} -lEGL
-Libs.private: 
+Libs.private: -lwlwseglcommon
 Cflags: -I${includedir}

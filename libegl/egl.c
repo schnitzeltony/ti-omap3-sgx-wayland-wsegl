@@ -43,7 +43,7 @@
 #include "server_wlegl_buffer.h"
 #endif
 
-#include "log.h"
+#include "wlwsegl-log.h"
 
 static void *_libegl = NULL;
 

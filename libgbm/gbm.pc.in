@@ -8,5 +8,5 @@ Description: gbm library
 Requires.private: libudev
 Version: @PACKAGE_VERSION@
 Libs: -L${libdir} -lgbm
-Libs.private: -ldl
+Libs.private: -ldl -lwlwseglcommon
 Cflags: -I${includedir}/gbm

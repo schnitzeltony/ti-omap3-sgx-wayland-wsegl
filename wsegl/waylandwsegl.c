@@ -58,7 +58,7 @@
 #include <time.h>
 #include "linux/omapfb.h"
 
-#include "log.h"
+#include "wlwsegl-log.h"
 #include "wayland-sgx-server-protocol.h"
 #include "wayland-sgx-client-protocol.h"
 #include "server_wlegl_buffer.h"

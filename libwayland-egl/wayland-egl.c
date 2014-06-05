@@ -41,7 +41,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <wayland-client.h>
 #include <wayland-egl.h>
 #include "wayland-egl-priv.h"
-#include "log.h"
+#include "wlwsegl-log.h"
 
 WL_EGL_EXPORT void
 wl_egl_window_resize(struct wl_egl_window *egl_window,

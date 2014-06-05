@@ -1,7 +1,5 @@
 lib_LTLIBRARIES = libEGL.la
 
-include $(top_srcdir)/common/common.mk
-
 libEGL_la_SOURCES =		\
 	egl.c			\
 	$(COMMON_SOURCES)
@@ -11,6 +9,9 @@ libEGL_la_CFLAGS = 		\
 
 libEGL_la_LDFLAGS = 		\
 	-version-info 1
+
+libEGL_la_LIBADD =	\
+	$(top_builddir)/common/libwlwseglcommon.la
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = egl.pc

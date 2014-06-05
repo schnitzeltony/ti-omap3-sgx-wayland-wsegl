@@ -37,6 +37,7 @@ fi
 
 # variable substitutions for templates
 AC_CONFIG_FILES([Makefile
+		common/Makefile
 		libegl/Makefile
 		libegl/egl.pc
 		libgbm/Makefile

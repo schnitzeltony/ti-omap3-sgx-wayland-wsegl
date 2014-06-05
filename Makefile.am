@@ -1,1 +1,1 @@
-SUBDIRS = libegl libgbm libwayland-egl wsegl
+SUBDIRS = common libegl libgbm libwayland-egl wsegl

@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "wlwsegl-common.h"
+
 
 static int logLevel = -1;
 
@@ -16,7 +18,7 @@ log_init()
     }
 }
 
-void
+WLWSEGL_EXPORT void
 wsegl_info(const char *fmt, ...)
 {
     log_init();
@@ -32,7 +34,7 @@ wsegl_info(const char *fmt, ...)
     printf("\n");
 }
 
-void
+WLWSEGL_EXPORT void
 wsegl_debug(const char *fmt, ...)
 {
     log_init();

@@ -41,7 +41,7 @@
 #include "gbm.h"
 #include "gbmint.h"
 #include "backend.h"
-#include "log.h"
+#include "wlwsegl-log.h"
 
 #define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
 

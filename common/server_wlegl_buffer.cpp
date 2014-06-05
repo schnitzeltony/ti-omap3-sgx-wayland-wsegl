@@ -25,6 +25,7 @@
 
 #include "server_wlegl_buffer.h"
 #include "server_wlegl_private.h"
+#include "wlwsegl-common.h"
 
 static void
 destroy(struct wl_client *client, struct wl_resource *resource)
@@ -49,7 +50,7 @@ static const struct wl_buffer_interface server_wlegl_buffer_impl = {
    const typeof( ((type *)0)->member ) *__mptr = (ptr); \
    (type *)( (char *)__mptr - offsetof(type,member) );})
 
-server_wlegl_buffer *
+WLWSEGL_EXPORT server_wlegl_buffer *
 server_wlegl_buffer_from(struct wl_buffer *buffer)
 {
 	if (buffer->resource.object.implementation !=

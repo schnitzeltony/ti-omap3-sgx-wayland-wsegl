@@ -7,4 +7,5 @@ Description: SGX wayland-egl library
 Version: @PACKAGE_VERSION@
 Requires: wayland-server wayland-client
 Libs: -L${libdir} -lwayland-egl -lwayland-client -lwayland-server -lpvr2d
+Libs.private: -lwlwseglcommon
 Cflags: -I${includedir}
