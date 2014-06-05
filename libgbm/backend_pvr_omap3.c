@@ -35,6 +35,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 
+#include "gbmint.h"
 #include "gbm_pvr_omap3_int.h"
 #include "wlwsegl-log.h"
 
@@ -287,7 +288,7 @@ pvr_omap3_device_create(int fd)
 }
 
 /* backend loader looks for symbol "gbm_backend" */
-struct gbm_backend gbm_backend = {
+GBM_EXPORT struct gbm_backend gbm_backend = {
    .backend_name = "pvr_omap3",
    .create_device = pvr_omap3_device_create,
 };
