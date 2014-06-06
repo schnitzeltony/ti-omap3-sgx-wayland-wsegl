@@ -19,7 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  *
- * Based on https://github.com/robclark/libgbm/blob/master/backend_example.c
+ * Based on
+ * 	https://github.com/robclark/libgbm/blob/master/backend_example.c
+ * 	http://cgit.freedesktop.org/mesa/mesa/tree/src/gbm/backends/dri/gbm_dri.c
  * Authors:
  *    Andreas Müller <schnitzeltony@googlemail.com>
  */
