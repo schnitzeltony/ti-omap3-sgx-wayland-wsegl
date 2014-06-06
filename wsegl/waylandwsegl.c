@@ -63,6 +63,9 @@
 #include "wayland-sgx-client-protocol.h"
 #include "server_wlegl_buffer.h"
 
+#include "egl-wlwsegl.h"
+#include "gbm.h"
+
 static WSEGLCaps const wseglDisplayCaps[] = {
     {WSEGL_CAP_WINDOWS_USE_HW_SYNC, 1},
     {WSEGL_CAP_PIXMAPS_USE_HW_SYNC, 1},
@@ -189,11 +192,21 @@ static PVR2DFORMAT wsegl2pvr2dformat(WSEGLPixelFormat format)
     }
 }
 
-
 /* Determine if nativeDisplay is a valid display handle */
 static WSEGLError wseglIsDisplayValid(NativeDisplayType nativeDisplay)
 {
-  return WSEGL_SUCCESS;
+	/* gbm check */
+	if (WLWSEGLGetEglContext() == WLWSEGL_CONTEXT_SERVER_DRM) {
+		struct gbm_device *gbm = nativeDisplay;
+		const char* name = gbm_device_get_backend_name(gbm);
+		if (strcmp(name, "pvr_omap3") != 0) {
+			wsegl_debug("invalid display for drm/gbm!");
+			return WSEGL_BAD_NATIVE_DISPLAY;
+		}
+		else
+			wsegl_debug("valid display \"%s\"for drm/gbm detected", name);
+	}
+	return WSEGL_SUCCESS;
 }
 
 /* Helper routines for pixel formats */
@@ -281,7 +294,7 @@ static WSEGLError wseglInitializeDisplay
     /* If it is a framebuffer */
     if (egldisplay->display == NULL)
     {
-        wsegl_info("wayland-wsegl: Initializing framebuffer");
+       wsegl_info("wayland-wsegl: Initializing framebuffer");
        int fd;
        WSEGLPixelFormat format;
        
