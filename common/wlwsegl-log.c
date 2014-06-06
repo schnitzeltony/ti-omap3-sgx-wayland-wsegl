@@ -26,12 +26,13 @@ wsegl_info(const char *fmt, ...)
     if (logLevel == 0)
         return;
 
+    fprintf(stderr, "wlwsegl: ");
     va_list args;
     va_start(args, fmt);
-    vprintf(fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
 
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
 WLWSEGL_EXPORT void
@@ -42,11 +43,12 @@ wsegl_debug(const char *fmt, ...)
     if (logLevel < 2)
         return;
 
+    fprintf(stderr, "wlwsegl: ");
     va_list args;
     va_start(args, fmt);
-    vprintf(fmt, args);
+    vfprintf(stderr, fmt, args);
     va_end(args);
 
-    printf("\n");
+    fprintf(stderr, "\n");
 }
 
