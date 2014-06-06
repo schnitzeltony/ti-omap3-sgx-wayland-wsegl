@@ -143,7 +143,6 @@ _gbm_mesa_get_device(int fd)
 GBM_EXPORT struct gbm_device *
 gbm_create_device(int fd)
 {
-   wsegl_info("gbm_create_device %i called.", fd);
    struct gbm_device *gbm = NULL;
    struct stat buf;
 
