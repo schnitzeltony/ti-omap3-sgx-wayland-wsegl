@@ -422,6 +422,7 @@ static WSEGLError wseglCreateWindowDrawable
     /* Framebuffer */
     if (nativeWindow == NULL)
     {
+       wsegl_debug("wseglCreateWindowDrawable for server called");
        PVR2DDISPLAYINFO displayInfo;
 
        assert(egldisplay->display == NULL);
@@ -454,6 +455,7 @@ static WSEGLError wseglCreateWindowDrawable
     }
     else
     {
+       wsegl_debug("wseglCreateWindowDrawable for client called");
        nativeWindow->display = egldisplay;
        nativeWindow->format = config->ePixelFormat;
     }

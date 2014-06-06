@@ -423,6 +423,7 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 #ifdef WANT_WAYLAND
 static EGLBoolean _my_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
+	wsegl_debug("eglBindWaylandDisplayWL called");
 	server_wlegl_create(display);
 }
 

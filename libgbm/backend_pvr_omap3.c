@@ -54,12 +54,14 @@ static int
 gbm_pvr_omap3_is_format_supported(struct gbm_device *gbm,
       enum gbm_bo_format format, uint32_t usage)
 {
+   wsegl_debug("pvr_omap3 gbm check format");
    return 0;
 }
 
 static int
 gbm_pvr_omap3_bo_write(struct gbm_bo *_bo, const void *buf, size_t count)
 {
+   wsegl_debug("Write pvr_omap3 gbm buffer");
 /*   struct gbm_dri_bo *bo = gbm_dri_bo(_bo);
 
    if (bo->image != NULL) {
@@ -91,12 +93,14 @@ gbm_pvr_omap3_bo_get_fd(struct gbm_bo *_bo)
 static void
 gbm_pvr_omap3_bo_destroy(struct gbm_bo *_bo)
 {
+   wsegl_debug("Destroy pvr_omap3 gbm buffer");
 }
 
 static struct gbm_bo *
 gbm_pvr_omap3_bo_import(struct gbm_device *gbm,
                   uint32_t type, void *buffer, uint32_t usage)
 {
+   wsegl_debug("Import pvr_omap3 gbm buffer");
 /*   struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
    __DRIimage *image;
@@ -220,6 +224,7 @@ static struct gbm_bo *
 gbm_pvr_omap3_bo_create(struct gbm_device *gbm, uint32_t width, uint32_t height,
       enum gbm_bo_format format, uint32_t usage)
 {
+   wsegl_debug("Create pvr_omap3 gbm buffer w: %u h: %u", width, height);
 /*   struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
    int dri_format;
@@ -295,6 +300,7 @@ gbm_pvr_omap3_surface_create(struct gbm_device *gbm,
 {
    struct gbm_pvr_omap3_surface *surf;
 
+   wsegl_debug("Create pvr_omap3 gbm surface w: %u h: %u", width, height);
    surf = calloc(1, sizeof *surf);
    if (surf == NULL)
       return NULL;
@@ -319,12 +325,13 @@ gbm_pvr_omap3_surface_destroy(struct gbm_surface *_surf)
 static void
 gbm_pvr_omap3_destroy(struct gbm_device *gbm)
 {
+   wsegl_info("Destroy pvr_omap3 gbm device");
 }
 
 static struct gbm_device *
 pvr_omap3_device_create(int fd)
 {
-   wsegl_info("Initialising pvr_omap3 gbm device.");
+   wsegl_info("Create pvr_omap3 gbm device");
    struct gbm_pvr_omap3_device *dev;
    int ret;
 
