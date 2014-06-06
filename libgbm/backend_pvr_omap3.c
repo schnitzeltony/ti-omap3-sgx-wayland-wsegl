@@ -100,7 +100,6 @@ gbm_pvr_omap3_bo_import(struct gbm_device *gbm,
 /*   struct gbm_dri_device *dri = gbm_dri_device(gbm);
    struct gbm_dri_bo *bo;
    __DRIimage *image;
-   unsigned dri_use = 0;
    int gbm_format;
 
     
@@ -221,6 +220,71 @@ static struct gbm_bo *
 gbm_pvr_omap3_bo_create(struct gbm_device *gbm, uint32_t width, uint32_t height,
       enum gbm_bo_format format, uint32_t usage)
 {
+/*   struct gbm_dri_device *dri = gbm_dri_device(gbm);
+   struct gbm_dri_bo *bo;
+   int dri_format;
+   unsigned dri_use = 0;
+
+   if (usage & GBM_BO_USE_WRITE)
+      return create_dumb(gbm, width, height, format, usage);
+
+   bo = calloc(1, sizeof *bo);
+   if (bo == NULL)
+      return NULL;
+
+   bo->base.base.gbm = gbm;
+   bo->base.base.width = width;
+   bo->base.base.height = height;
+   bo->base.base.format = format;
+
+   switch (format) {
+   case GBM_FORMAT_RGB565:
+      dri_format =__DRI_IMAGE_FORMAT_RGB565;
+      break;
+   case GBM_FORMAT_XRGB8888:
+   case GBM_BO_FORMAT_XRGB8888:
+      dri_format = __DRI_IMAGE_FORMAT_XRGB8888;
+      break;
+   case GBM_FORMAT_ARGB8888:
+   case GBM_BO_FORMAT_ARGB8888:
+      dri_format = __DRI_IMAGE_FORMAT_ARGB8888;
+      break;
+   case GBM_FORMAT_ABGR8888:
+      dri_format = __DRI_IMAGE_FORMAT_ABGR8888;
+      break;
+   case GBM_FORMAT_ARGB2101010:
+      dri_format = __DRI_IMAGE_FORMAT_ARGB2101010;
+      break;
+   case GBM_FORMAT_XRGB2101010:
+      dri_format = __DRI_IMAGE_FORMAT_XRGB2101010;
+      break;
+   default:
+      errno = EINVAL;
+      goto failed;
+   }
+
+   if (usage & GBM_BO_USE_SCANOUT)
+      dri_use |= __DRI_IMAGE_USE_SCANOUT;
+   if (usage & GBM_BO_USE_CURSOR_64X64)
+      dri_use |= __DRI_IMAGE_USE_CURSOR;
+
+   bo->image =
+      dri->image->createImage(dri->screen,
+                              width, height,
+                              dri_format, dri_use,
+                              bo);
+   if (bo->image == NULL)
+      goto failed;
+
+   dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_HANDLE,
+                          &bo->base.base.handle.s32);
+   dri->image->queryImage(bo->image, __DRI_IMAGE_ATTRIB_STRIDE,
+                          (int *) &bo->base.base.stride);
+
+   return &bo->base.base;
+
+failed:
+   free(bo);*/
    return NULL;
 }
 
