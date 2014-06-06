@@ -258,7 +258,7 @@ gbm_pvr_omap3_destroy(struct gbm_device *gbm)
 static struct gbm_device *
 pvr_omap3_device_create(int fd)
 {
-   wsegl_debug("Initialising pvr_omap3 gbm device.");
+   wsegl_info("Initialising pvr_omap3 gbm device.");
    struct gbm_pvr_omap3_device *dev;
    int ret;
 

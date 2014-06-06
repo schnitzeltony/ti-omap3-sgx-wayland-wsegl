@@ -68,7 +68,7 @@ load_backend(const struct backend_desc *backend)
       else
          snprintf(path, sizeof path, "%s", name);
 
-      wsegl_debug("Tying to load gbm backend %s", name);
+      wsegl_info("Tying to load gbm backend %s", name);
       module = dlopen(path, RTLD_NOW | RTLD_GLOBAL);
       if (!module) {
          fprintf(stderr,
@@ -79,7 +79,7 @@ load_backend(const struct backend_desc *backend)
       init = dlsym(module, entrypoint);
       if (!init)
       {
-         wsegl_debug("could not find entrypoint gbm_backend for %s", name);
+         wsegl_info("could not find entrypoint gbm_backend for %s", name);
          return NULL;
       }
    }
@@ -106,7 +106,7 @@ find_backend(const char *name)
 struct gbm_device *
 _gbm_create_device(int fd)
 {
-   wsegl_debug("_gbm_create_device %i called.", fd);
+   wsegl_info("_gbm_create_device %i called.", fd);
    const struct gbm_backend *backend = NULL;
    struct gbm_device *dev = NULL;
    int i;
