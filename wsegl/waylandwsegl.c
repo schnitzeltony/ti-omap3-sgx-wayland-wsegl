@@ -283,65 +283,73 @@ static WSEGLError wseglInitializeDisplay
     (NativeDisplayType nativeDisplay, WSEGLDisplayHandle *display,
      const WSEGLCaps **caps, WSEGLConfig **configs)
 {
-    struct wl_egl_display *egldisplay = wl_egl_display_create((struct wl_display *) nativeDisplay);
+	struct wl_egl_display *egldisplay = wl_egl_display_create((struct wl_display *) nativeDisplay);
 
-    if (wseglFetchContext(egldisplay) != 1)
-    {
-       wl_egl_display_destroy(egldisplay);
-       return WSEGL_OUT_OF_MEMORY;
-    }
+	if (wseglFetchContext(egldisplay) != 1)
+	{
+		wl_egl_display_destroy(egldisplay);
+		return WSEGL_OUT_OF_MEMORY;
+	}
+	/* egl-server / client */
+	if (WLWSEGLGetEglContext() != WLWSEGL_CONTEXT_SERVER_DRM)
+	{
+		/* If it is a framebuffer */
+		if (egldisplay->display == NULL)
+		{
+			wsegl_info("wayland-wsegl: Initializing framebuffer");
+			int fd;
+			WSEGLPixelFormat format;
 
-    /* If it is a framebuffer */
-    if (egldisplay->display == NULL)
-    {
-       wsegl_info("wayland-wsegl: Initializing framebuffer");
-       int fd;
-       WSEGLPixelFormat format;
-       
-       /* Open the framebuffer and fetch its properties */
-       fd = open("/dev/fb0", O_RDWR, 0);
-       if (fd < 0) {
-          perror("/dev/fb0");
-          wseglReleaseContext(egldisplay);
-          wl_egl_display_destroy(egldisplay);
-          return WSEGL_CANNOT_INITIALISE;
-       }
-       if (ioctl(fd, FBIOGET_VSCREENINFO, &egldisplay->var) < 0) {
-          perror("FBIOGET_VSCREENINFO");
-          wseglReleaseContext(egldisplay);
-          wl_egl_display_destroy(egldisplay);
-          close(fd);
-          return WSEGL_CANNOT_INITIALISE; 
-       }
-       if (ioctl(fd, FBIOGET_FSCREENINFO, &egldisplay->fix) < 0) {
-          perror("FBIOGET_FSCREENINFO");
-          wseglReleaseContext(egldisplay);
-          wl_egl_display_destroy(egldisplay);
-          close(fd);
-          return WSEGL_CANNOT_INITIALISE; 
-       }
-       egldisplay->fd = fd;
-       format = getwseglPixelFormat(egldisplay);
+			/* Open the framebuffer and fetch its properties */
+			fd = open("/dev/fb0", O_RDWR, 0);
+			if (fd < 0) {
+				perror("/dev/fb0");
+				wseglReleaseContext(egldisplay);
+				wl_egl_display_destroy(egldisplay);
+				return WSEGL_CANNOT_INITIALISE;
+			}
+			if (ioctl(fd, FBIOGET_VSCREENINFO, &egldisplay->var) < 0) {
+				perror("FBIOGET_VSCREENINFO");
+				wseglReleaseContext(egldisplay);
+				wl_egl_display_destroy(egldisplay);
+				close(fd);
+				return WSEGL_CANNOT_INITIALISE; 
+			}
+			if (ioctl(fd, FBIOGET_FSCREENINFO, &egldisplay->fix) < 0) {
+				perror("FBIOGET_FSCREENINFO");
+				wseglReleaseContext(egldisplay);
+				wl_egl_display_destroy(egldisplay);
+				close(fd);
+				return WSEGL_CANNOT_INITIALISE; 
+			}
+			egldisplay->fd = fd;
+			format = getwseglPixelFormat(egldisplay);
 
-       egldisplay->wseglDisplayConfigs[0].ePixelFormat = format;
-       egldisplay->wseglDisplayConfigs[1].ePixelFormat = format;
-    }
-    else
-    {
-        egldisplay->queue = wl_display_create_queue(nativeDisplay);
-        egldisplay->frame_callback = NULL;
-        egldisplay->registry = wl_display_get_registry(nativeDisplay);
-        wl_proxy_set_queue(egldisplay->registry, egldisplay->queue);
-        wl_registry_add_listener(egldisplay->registry, &registry_listener, egldisplay);
+			egldisplay->wseglDisplayConfigs[0].ePixelFormat = format;
+			egldisplay->wseglDisplayConfigs[1].ePixelFormat = format;
+		}
+		else
+		{
+			egldisplay->queue = wl_display_create_queue(nativeDisplay);
+			egldisplay->frame_callback = NULL;
+			egldisplay->registry = wl_display_get_registry(nativeDisplay);
+			wl_proxy_set_queue(egldisplay->registry, egldisplay->queue);
+			wl_registry_add_listener(egldisplay->registry, &registry_listener, egldisplay);
 
-        assert(wayland_roundtrip(egldisplay) >= 0);
-        assert(egldisplay->sgx_wlegl);
-    }
+			assert(wayland_roundtrip(egldisplay) >= 0);
+			assert(egldisplay->sgx_wlegl);
+		}
 
-    *display = (WSEGLDisplayHandle)egldisplay;
-    *caps = wseglDisplayCaps;
-    *configs = egldisplay->wseglDisplayConfigs;
-    return WSEGL_SUCCESS;
+		*display = (WSEGLDisplayHandle)egldisplay;
+		*caps = wseglDisplayCaps;
+		*configs = egldisplay->wseglDisplayConfigs;
+	}
+	/* drm-server */
+	else
+	{
+		struct gbm_device *gbm = (struct gbm_device *)nativeDisplay;
+	}
+	return WSEGL_SUCCESS;
 }
 
 /* Close the WSEGL display */

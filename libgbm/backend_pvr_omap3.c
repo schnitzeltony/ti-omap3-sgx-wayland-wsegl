@@ -45,9 +45,7 @@
 static int
 gles_init(struct gbm_pvr_omap3_device *dev)
 {
-   /* this should open/initialize the GLES stack.. for a DRM driver
-    * at least, dev->base.base.fd will have the already opened device
-    */
+   /* inform egl that drm/gbm is used */
    WLWSEGLSetEglContext(WLWSEGL_CONTEXT_SERVER_DRM);
    return 0;
 }
