@@ -8,11 +8,13 @@ waylandwsegl_la_CFLAGS =		\
 	$(WAYLAND_CLIENT_CFLAGS)	\
 	$(WAYLAND_SERVER_CFLAGS)	\
 	-I$(top_srcdir)/common		\
+	-I$(top_srcdir)/libegl		\
 	-I$(top_srcdir)/libwayland-egl
 
 waylandwsegl_la_LIBADD =		\
 	$(top_builddir)/libwayland-egl/libwayland-egl.la \
 	$(top_builddir)/common/libwlwseglcommon.la \
+	$(top_builddir)/libegl/libEGL.la \
 	$(PVR2D_LIB)
 
 waylandwsegl_la_LDFLAGS =		\

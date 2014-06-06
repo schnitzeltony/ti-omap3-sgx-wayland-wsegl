@@ -44,6 +44,7 @@
 #endif
 
 #include "wlwsegl-log.h"
+#include "egl-wlwsegl.h"
 
 static void *_libegl = NULL;
 
@@ -424,6 +425,7 @@ static EGLImageKHR _my_eglCreateImageKHR(EGLDisplay dpy, EGLContext ctx, EGLenum
 static EGLBoolean _my_eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
 {
 	wsegl_debug("eglBindWaylandDisplayWL called");
+	WLWSEGLSetEglContext(WLWSEGL_CONTEXT_SERVER_EGL);
 	server_wlegl_create(display);
 }
 
@@ -482,5 +484,37 @@ EGLBoolean eglDestroyImageKHR(EGLDisplay dpy, EGLImageKHR image)
 	return (*_eglDestroyImageKHR)(dpy, image);
 }
 
+static enum WLWSEGL_CONTEXT wlwseglContext = WLWSEGL_CONTEXT_UNKNOWN;
 
-// vim:ts=4:sw=4:noexpandtab
+void WLWSEGLSetEglContext(enum WLWSEGL_CONTEXT context)
+{
+	/* only allowed once per server */
+	assert(context == WLWSEGL_CONTEXT_CLIENT || wlwseglContext == WLWSEGL_CONTEXT_UNKNOWN);
+	wlwseglContext = context;
+}
+
+enum WLWSEGL_CONTEXT WLWSEGLGetEglContext()
+{
+	return wlwseglContext;
+}
+
+void WLWSEGLLogEglContext()
+{
+	enum WLWSEGL_CONTEXT context;
+	context = WLWSEGLGetEglContext();
+	switch(context)
+	{
+		case WLWSEGL_CONTEXT_SERVER_EGL:
+			wsegl_debug("wayland context: server/egl");
+			break;
+		case WLWSEGL_CONTEXT_SERVER_DRM:
+			wsegl_debug("wayland context: server/drm");
+			break;
+		case WLWSEGL_CONTEXT_CLIENT:
+			wsegl_debug("wayland context: client");
+			break;
+		default:
+			wsegl_debug("wayland context: unknown");
+			break;
+	}
+}

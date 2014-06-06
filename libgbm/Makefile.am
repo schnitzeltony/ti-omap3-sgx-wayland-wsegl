@@ -33,6 +33,7 @@ gbm_pvr_omap3_la_SOURCES =	\
 
 gbm_pvr_omap3_la_CFLAGS =	\
 	-I$(top_srcdir)/common	\
+	-I$(top_srcdir)/libegl	\
 	$(AM_CFLAGS) 		\
 	$(LIBDRM_CFLAGS)
 
@@ -42,5 +43,6 @@ gbm_pvr_omap3_la_LDFLAGS =	\
 	-avoid-version
 
 gbm_pvr_omap3_la_LIBADD =	\
+	$(top_builddir)/libegl/libEGL.la \
 	$(top_builddir)/common/libwlwseglcommon.la
 

@@ -40,6 +40,7 @@
 #include "gbmint.h"
 #include "gbm_pvr_omap3_int.h"
 #include "wlwsegl-log.h"
+#include "egl-wlwsegl.h"
 
 static int
 gles_init(struct gbm_pvr_omap3_device *dev)
@@ -47,6 +48,7 @@ gles_init(struct gbm_pvr_omap3_device *dev)
    /* this should open/initialize the GLES stack.. for a DRM driver
     * at least, dev->base.base.fd will have the already opened device
     */
+   WLWSEGLSetEglContext(WLWSEGL_CONTEXT_SERVER_DRM);
    return 0;
 }
 
