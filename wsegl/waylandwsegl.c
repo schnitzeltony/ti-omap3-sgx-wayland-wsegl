@@ -341,6 +341,9 @@ static WSEGLError wseglInitializeDisplay
 	else
 	{
 		struct gbm_device *gbm = (struct gbm_device *)nativeDisplay;
+		/* see eglBindWaylandDisplayWL for egl-server*/
+		if (WLWSEGLGetEglContext() == WLWSEGL_CONTEXT_SERVER_DRM)
+			server_wlegl_create(egldisplay->display);
 	}
 	return WSEGL_SUCCESS;
 }
