@@ -315,13 +315,6 @@ static WSEGLError wseglInitializeDisplay
 				close(fd);
 				return WSEGL_CANNOT_INITIALISE; 
 			}
-			if (ioctl(fd, FBIOGET_FSCREENINFO, &egldisplay->fix) < 0) {
-				perror("FBIOGET_FSCREENINFO");
-				wseglReleaseContext(egldisplay);
-				wl_egl_display_destroy(egldisplay);
-				close(fd);
-				return WSEGL_CANNOT_INITIALISE; 
-			}
 			egldisplay->fd = fd;
 			format = getwseglPixelFormat(egldisplay);
 
