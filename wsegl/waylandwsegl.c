@@ -239,6 +239,48 @@ static WSEGLPixelFormat getwseglPixelFormat(struct wl_egl_display *egldisplay)
     return WSEGL_SUCCESS;
 }
 
+static WSEGLPixelFormat getwseglgbmPixelFormat(uint32_t gbm_format)
+{
+    switch (gbm_format)
+    {
+        case GBM_FORMAT_RGB565:
+            return WSEGL_PIXELFORMAT_RGB565;
+
+        case GBM_FORMAT_ARGB1555:
+            return WSEGL_PIXELFORMAT_ARGB1555;
+
+        case GBM_FORMAT_ARGB4444:
+            return WSEGL_PIXELFORMAT_ARGB4444;
+
+        case GBM_FORMAT_XRGB8888:
+        case GBM_BO_FORMAT_XRGB8888:
+            return WSEGL_PIXELFORMAT_XRGB8888;
+
+        case GBM_FORMAT_XBGR8888:
+            return WSEGL_PIXELFORMAT_XBGR8888;
+
+        case GBM_FORMAT_ARGB8888:
+        case GBM_BO_FORMAT_ARGB8888:
+            return WSEGL_PIXELFORMAT_ARGB8888;
+
+        case GBM_FORMAT_ABGR8888:
+            return WSEGL_PIXELFORMAT_ABGR8888;
+
+        case GBM_FORMAT_YUYV:
+            return WSEGL_PIXELFORMAT_YUYV;
+
+        case GBM_FORMAT_UYVY:
+            return WSEGL_PIXELFORMAT_UYVY;
+
+        case GBM_FORMAT_NV12:
+            return WSEGL_PIXELFORMAT_NV12;
+
+        case GBM_FORMAT_NV21:
+            return WSEGL_PIXELFORMAT_NV21;
+    }
+    return -1;
+}
+
 static void registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
     const char *interface, uint32_t version)
 {
@@ -438,6 +480,8 @@ static WSEGLError wseglCreateWindowDrawable
      WSEGLRotationAngle *rotationAngle)
 {
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
+    PVR2DDISPLAYINFO displayInfo;
+    
     if (WLWSEGLGetEglContext() != WLWSEGL_CONTEXT_SERVER_DRM)
     /*if (egldisplay->wlwseglContext != WLWSEGL_CONTEXT_SERVER_DRM)*/
     {
@@ -446,12 +490,10 @@ static WSEGLError wseglCreateWindowDrawable
         if (nativeWindow == NULL)
         {
            wsegl_debug("wseglCreateWindowDrawable for server called");
-           PVR2DDISPLAYINFO displayInfo;
 
            assert(egldisplay->display == NULL);
 
            /* Let's create a fake wl_egl_window to simplify code */
-
            nativeWindow = wl_egl_window_create(NULL, egldisplay->var.xres, egldisplay->var.yres);
            assert(egldisplay->wseglDisplayConfigs[0].ePixelFormat == egldisplay->wseglDisplayConfigs[1].ePixelFormat);
            nativeWindow->format = egldisplay->wseglDisplayConfigs[0].ePixelFormat;
@@ -526,6 +568,22 @@ static WSEGLError wseglCreateWindowDrawable
     {
         struct gbm_surface* surface = (struct gbm_surface*) nativeWindow;
         wsegl_debug("wseglCreateWindowDrawable for drm called w: %u h: %u", surface->width, surface->height);
+
+        /* Let's create a fake wl_egl_window to simplify code */
+        nativeWindow = wl_egl_window_create(NULL, surface->width, surface->height);
+        nativeWindow->format = getwseglgbmPixelFormat(surface->format);
+        nativeWindow->display = egldisplay;
+
+        assert(PVR2DGetDeviceInfo(egldisplay->context, &displayInfo) == PVR2D_OK);
+
+        wsegl_debug("ulMaxFlipChains: %lu", displayInfo.ulMaxFlipChains);
+        wsegl_debug("ulMaxBuffersInChain: %lu", displayInfo.ulMaxBuffersInChain);
+        wsegl_debug("eFormat: %d", displayInfo.eFormat);
+        wsegl_debug("ulWidth: %lu", displayInfo.ulWidth);
+        wsegl_debug("ulHeight: %lu", displayInfo.ulHeight);
+        wsegl_debug("lStride: %lu", displayInfo.lStride);
+        wsegl_debug("ulMinFlipInterval: %lu", displayInfo.ulMinFlipInterval);
+        wsegl_debug("ulMaxFlipInterval: %lu", displayInfo.ulMaxFlipInterval);
     }
     *drawable = (WSEGLDrawableHandle) nativeWindow; /* Reuse the egldisplay */
     *rotationAngle = WSEGL_ROTATE_0;
