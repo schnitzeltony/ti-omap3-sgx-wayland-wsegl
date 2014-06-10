@@ -201,6 +201,7 @@ EGLSurface eglCreateWindowSurface(EGLDisplay dpy, EGLConfig config,
 		EGLNativeWindowType win,
 		const EGLint *attrib_list)
 {
+	wsegl_info("eglCreateWindowSurface for display %x", dpy);
 	EGL_DLSYM(&_eglCreateWindowSurface, "eglCreateWindowSurface");
 	return (*_eglCreateWindowSurface)(dpy, config, win, attrib_list);
 }

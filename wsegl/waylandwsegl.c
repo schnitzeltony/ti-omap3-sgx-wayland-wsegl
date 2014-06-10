@@ -65,6 +65,7 @@
 
 #include "egl-wlwsegl.h"
 #include "gbm.h"
+#include "gbmint.h"
 
 static WSEGLCaps const wseglDisplayCaps[] = {
     {WSEGL_CAP_WINDOWS_USE_HW_SYNC, 1},
@@ -523,7 +524,8 @@ static WSEGLError wseglCreateWindowDrawable
     }
     else
     {
-        wsegl_debug("wseglCreateWindowDrawable for drm called");
+        struct gbm_surface* surface = (struct gbm_surface*) nativeWindow;
+        wsegl_debug("wseglCreateWindowDrawable for drm called w: %u h: %u", surface->width, surface->height);
     }
     *drawable = (WSEGLDrawableHandle) nativeWindow; /* Reuse the egldisplay */
     *rotationAngle = WSEGL_ROTATE_0;
