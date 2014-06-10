@@ -437,87 +437,94 @@ static WSEGLError wseglCreateWindowDrawable
      WSEGLRotationAngle *rotationAngle)
 {
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
-    int index;
-    /* Framebuffer */
-    if (nativeWindow == NULL)
+    if (WLWSEGLGetEglContext() != WLWSEGL_CONTEXT_SERVER_DRM)
+    /*if (egldisplay->wlwseglContext != WLWSEGL_CONTEXT_SERVER_DRM)*/
     {
-       wsegl_debug("wseglCreateWindowDrawable for server called");
-       PVR2DDISPLAYINFO displayInfo;
+        int index;
+        /* Framebuffer */
+        if (nativeWindow == NULL)
+        {
+           wsegl_debug("wseglCreateWindowDrawable for server called");
+           PVR2DDISPLAYINFO displayInfo;
 
-       assert(egldisplay->display == NULL);
+           assert(egldisplay->display == NULL);
 
-       /* Let's create a fake wl_egl_window to simplify code */
+           /* Let's create a fake wl_egl_window to simplify code */
 
-       nativeWindow = wl_egl_window_create(NULL, egldisplay->var.xres, egldisplay->var.yres);
-       assert(egldisplay->wseglDisplayConfigs[0].ePixelFormat == egldisplay->wseglDisplayConfigs[1].ePixelFormat);
-       nativeWindow->format = egldisplay->wseglDisplayConfigs[0].ePixelFormat;
-       nativeWindow->display = egldisplay;
+           nativeWindow = wl_egl_window_create(NULL, egldisplay->var.xres, egldisplay->var.yres);
+           assert(egldisplay->wseglDisplayConfigs[0].ePixelFormat == egldisplay->wseglDisplayConfigs[1].ePixelFormat);
+           nativeWindow->format = egldisplay->wseglDisplayConfigs[0].ePixelFormat;
+           nativeWindow->display = egldisplay;
 
-       assert(PVR2DGetDeviceInfo(egldisplay->context, &displayInfo) == PVR2D_OK);
+           assert(PVR2DGetDeviceInfo(egldisplay->context, &displayInfo) == PVR2D_OK);
 
-       wsegl_debug("ulMaxFlipChains: %lu", displayInfo.ulMaxFlipChains);
-       wsegl_debug("ulMaxBuffersInChain: %lu", displayInfo.ulMaxBuffersInChain);
-       wsegl_debug("eFormat: %d", displayInfo.eFormat);
-       wsegl_debug("ulWidth: %lu", displayInfo.ulWidth);
-       wsegl_debug("ulHeight: %lu", displayInfo.ulHeight);
-       wsegl_debug("lStride: %lu", displayInfo.lStride);
-       wsegl_debug("ulMinFlipInterval: %lu", displayInfo.ulMinFlipInterval);
-       wsegl_debug("ulMaxFlipInterval: %lu", displayInfo.ulMaxFlipInterval);
+           wsegl_debug("ulMaxFlipChains: %lu", displayInfo.ulMaxFlipChains);
+           wsegl_debug("ulMaxBuffersInChain: %lu", displayInfo.ulMaxBuffersInChain);
+           wsegl_debug("eFormat: %d", displayInfo.eFormat);
+           wsegl_debug("ulWidth: %lu", displayInfo.ulWidth);
+           wsegl_debug("ulHeight: %lu", displayInfo.ulHeight);
+           wsegl_debug("lStride: %lu", displayInfo.lStride);
+           wsegl_debug("ulMinFlipInterval: %lu", displayInfo.ulMinFlipInterval);
+           wsegl_debug("ulMaxFlipInterval: %lu", displayInfo.ulMaxFlipInterval);
 
-       if (displayInfo.ulMaxFlipChains > 0 && displayInfo.ulMaxBuffersInChain > 0)
-              nativeWindow->numFlipBuffers = displayInfo.ulMaxBuffersInChain;
-       if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_MAX_FLIP_BUFFERS)
-              nativeWindow->numFlipBuffers = WAYLANDWSEGL_MAX_FLIP_BUFFERS;
+           if (displayInfo.ulMaxFlipChains > 0 && displayInfo.ulMaxBuffersInChain > 0)
+                  nativeWindow->numFlipBuffers = displayInfo.ulMaxBuffersInChain;
+           if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_MAX_FLIP_BUFFERS)
+                  nativeWindow->numFlipBuffers = WAYLANDWSEGL_MAX_FLIP_BUFFERS;
 
-       /* Workaround for broken devices, seen in debugging */
-       if (nativeWindow->numFlipBuffers < 2)
-              nativeWindow->numFlipBuffers = 0;
+           /* Workaround for broken devices, seen in debugging */
+           if (nativeWindow->numFlipBuffers < 2)
+                  nativeWindow->numFlipBuffers = 0;
+        }
+        else
+        {
+           wsegl_debug("wseglCreateWindowDrawable for client called");
+           nativeWindow->display = egldisplay;
+           nativeWindow->format = config->ePixelFormat;
+        }
+
+        /* We can't do empty buffers, so let's make a 8x8 one. */
+        if (nativeWindow->width == 0 || nativeWindow->height == 0)
+        {
+            nativeWindow->width = nativeWindow->height = 8;
+        }
+
+
+        /* If we don't have back buffers allocated already */
+        if (!(nativeWindow->backBuffers[0] && nativeWindow->backBuffersValid))
+        {
+           nativeWindow->stridePixels = (nativeWindow->width + 7) & ~7;
+           nativeWindow->strideBytes = nativeWindow->stridePixels * wseglPixelFormatBytesPP(nativeWindow->format);
+
+           if (allocateBackBuffers(egldisplay, nativeWindow) == WSEGL_OUT_OF_MEMORY)
+              return WSEGL_OUT_OF_MEMORY;
+
+           /* Wayland window */
+           if (nativeWindow->display->display != NULL)
+           {
+                for (index = 0; index < WAYLANDWSEGL_MAX_BACK_BUFFERS; index++)
+                {
+                  PVR2D_HANDLE name;
+
+                  assert(PVR2DMemExport(egldisplay->context, 0, nativeWindow->backBuffers[index], &name) == PVR2D_OK);
+                  nativeWindow->exporthandles[index] = name;
+
+                  // TODO: clear exporthandles up
+                }
+           }
+           /* Framebuffer */
+           else
+           {
+               /* XXX should assert something about stride etc.. */
+               assert(PVR2DGetFrameBuffer(egldisplay->context, PVR2D_FB_PRIMARY_SURFACE, &nativeWindow->frontBufferPVRMEM) == PVR2D_OK);
+               // nativeWindow->frontBuffer = (void *) nativeWindow->frontBufferPVRMEM->pBase;
+           }
+        }
     }
     else
     {
-       wsegl_debug("wseglCreateWindowDrawable for client called");
-       nativeWindow->display = egldisplay;
-       nativeWindow->format = config->ePixelFormat;
+        wsegl_debug("wseglCreateWindowDrawable for drm called");
     }
-
-    /* We can't do empty buffers, so let's make a 8x8 one. */
-    if (nativeWindow->width == 0 || nativeWindow->height == 0)
-    {
-        nativeWindow->width = nativeWindow->height = 8;
-    }
-
-
-    /* If we don't have back buffers allocated already */
-    if (!(nativeWindow->backBuffers[0] && nativeWindow->backBuffersValid))
-    {
-       nativeWindow->stridePixels = (nativeWindow->width + 7) & ~7; 
-       nativeWindow->strideBytes = nativeWindow->stridePixels * wseglPixelFormatBytesPP(nativeWindow->format);
-
-       if (allocateBackBuffers(egldisplay, nativeWindow) == WSEGL_OUT_OF_MEMORY)
-          return WSEGL_OUT_OF_MEMORY;
-
-       /* Wayland window */  
-       if (nativeWindow->display->display != NULL)
-       {
-            for (index = 0; index < WAYLANDWSEGL_MAX_BACK_BUFFERS; index++)
-            {
-              PVR2D_HANDLE name;
-
-              assert(PVR2DMemExport(egldisplay->context, 0, nativeWindow->backBuffers[index], &name) == PVR2D_OK);
-              nativeWindow->exporthandles[index] = name;
-
-              // TODO: clear exporthandles up
-            }
-       }
-       /* Framebuffer */
-       else
-       {
-           /* XXX should assert something about stride etc.. */
-           assert(PVR2DGetFrameBuffer(egldisplay->context, PVR2D_FB_PRIMARY_SURFACE, &nativeWindow->frontBufferPVRMEM) == PVR2D_OK);
-           // nativeWindow->frontBuffer = (void *) nativeWindow->frontBufferPVRMEM->pBase;
-       }
-    }      
-  
     *drawable = (WSEGLDrawableHandle) nativeWindow; /* Reuse the egldisplay */
     *rotationAngle = WSEGL_ROTATE_0;
     return WSEGL_SUCCESS;
