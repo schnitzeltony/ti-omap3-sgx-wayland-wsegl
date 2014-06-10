@@ -53,6 +53,7 @@ typedef struct wl_egl_window* NativeWindowType;
 
 #include <wsegl.h>
 #include "wayland-sgx-server-protocol.h"
+#include "egl-wlwsegl.h"
 
 #define WAYLANDWSEGL_MAX_BACK_BUFFERS     2
 #define WAYLANDWSEGL_MAX_FLIP_BUFFERS 	  2
@@ -72,17 +73,18 @@ struct wwsegl_drawable_header {
 
 struct wl_egl_display {
 	struct wl_display *display;
-    int fd;
-    char *device_name;
-    bool authenticated;
+	int fd;
+	char *device_name;
+	bool authenticated;
 	int context_refcnt;
 	PVR2DCONTEXTHANDLE context;
 	WSEGLConfig wseglDisplayConfigs[3];
 	struct fb_var_screeninfo var;
-    struct wl_queue *queue;
-    struct wl_callback *frame_callback;
-    struct wl_registry *registry;
-    struct sgx_wlegl *sgx_wlegl;
+	struct wl_queue *queue;
+	struct wl_callback *frame_callback;
+	struct wl_registry *registry;
+	struct sgx_wlegl *sgx_wlegl;
+	enum WLWSEGL_CONTEXT wlwseglContext;
 };
 
 struct wl_egl_window {

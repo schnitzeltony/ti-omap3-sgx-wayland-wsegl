@@ -74,7 +74,7 @@ static WSEGLCaps const wseglDisplayCaps[] = {
 
 
 struct wl_egl_display*
-wl_egl_display_create(struct wl_display *display)
+wl_egl_display_create(struct wl_display *display, enum WLWSEGL_CONTEXT wlwseglContext)
 {
 	struct wl_egl_display *egl_display;
 
@@ -82,6 +82,7 @@ wl_egl_display_create(struct wl_display *display)
 	if (!egl_display)
 		return NULL;
 	egl_display->display = display;
+	egl_display->wlwseglContext = wlwseglContext;
 
 	egl_display->fd = -1;
 	egl_display->device_name = NULL;
@@ -283,7 +284,8 @@ static WSEGLError wseglInitializeDisplay
     (NativeDisplayType nativeDisplay, WSEGLDisplayHandle *display,
      const WSEGLCaps **caps, WSEGLConfig **configs)
 {
-	struct wl_egl_display *egldisplay = wl_egl_display_create((struct wl_display *) nativeDisplay);
+	enum WLWSEGL_CONTEXT wlwseglContext = WLWSEGLGetEglContext();
+	struct wl_egl_display *egldisplay = wl_egl_display_create((struct wl_display *) nativeDisplay, wlwseglContext);
 
 	if (wseglFetchContext(egldisplay) != 1)
 	{
@@ -291,7 +293,7 @@ static WSEGLError wseglInitializeDisplay
 		return WSEGL_OUT_OF_MEMORY;
 	}
 	/* egl-server / client */
-	if (WLWSEGLGetEglContext() != WLWSEGL_CONTEXT_SERVER_DRM)
+	if (wlwseglContext != WLWSEGL_CONTEXT_SERVER_DRM)
 	{
 		/* If it is a framebuffer */
 		if (egldisplay->display == NULL)
