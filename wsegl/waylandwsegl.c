@@ -341,10 +341,6 @@ static WSEGLError wseglInitializeDisplay
 		//struct gbm_device *gbm = (struct gbm_device *)nativeDisplay;
 		// TBD: update wseglDisplayConfigs
 
-		/* see eglBindWaylandDisplayWL for egl-server*/
-		if (WLWSEGLGetEglContext() == WLWSEGL_CONTEXT_SERVER_DRM)
-			server_wlegl_create(egldisplay->display);
-
 	}
 	*configs = egldisplay->wseglDisplayConfigs;
 	*display = (WSEGLDisplayHandle)egldisplay;
