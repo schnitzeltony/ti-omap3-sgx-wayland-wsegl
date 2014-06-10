@@ -142,7 +142,7 @@ EGLDisplay eglGetDisplay(EGLNativeDisplayType display_id)
 
 EGLBoolean eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
 {
-	wsegl_info("eglInitialize");
+	wsegl_info("eglInitialize for display %x", dpy);
 	EGL_DLSYM(&_eglInitialize, "eglInitialize");
 	return (*_eglInitialize)(dpy, major, minor);
 }
@@ -173,6 +173,7 @@ const char * eglQueryString(EGLDisplay dpy, EGLint name)
 EGLBoolean eglGetConfigs(EGLDisplay dpy, EGLConfig *configs,
 		EGLint config_size, EGLint *num_config)
 {
+	wsegl_debug("eglGetConfigs for display %x", dpy);
 	EGL_DLSYM(&_eglGetConfigs, "eglGetConfigs");
 	return (*_eglGetConfigs)(dpy, configs, config_size, num_config);
 }
@@ -181,6 +182,7 @@ EGLBoolean eglChooseConfig(EGLDisplay dpy, const EGLint *attrib_list,
 		EGLConfig *configs, EGLint config_size,
 		EGLint *num_config)
 {
+	wsegl_debug("eglChooseConfig for display %x", dpy);
 	EGL_DLSYM(&_eglChooseConfig, "eglChooseConfig");
 	return (*_eglChooseConfig)(dpy, attrib_list,
 			configs, config_size,
