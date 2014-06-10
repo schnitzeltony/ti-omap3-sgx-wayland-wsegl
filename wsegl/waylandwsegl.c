@@ -333,18 +333,22 @@ static WSEGLError wseglInitializeDisplay
 			assert(egldisplay->sgx_wlegl);
 		}
 
-		*display = (WSEGLDisplayHandle)egldisplay;
-		*caps = wseglDisplayCaps;
-		*configs = egldisplay->wseglDisplayConfigs;
 	}
 	/* drm-server */
 	else
 	{
-		struct gbm_device *gbm = (struct gbm_device *)nativeDisplay;
+		wsegl_info("wseglInitializeDisplay for drm/gbm");
+		//struct gbm_device *gbm = (struct gbm_device *)nativeDisplay;
+		// TBD: update wseglDisplayConfigs
+
 		/* see eglBindWaylandDisplayWL for egl-server*/
 		if (WLWSEGLGetEglContext() == WLWSEGL_CONTEXT_SERVER_DRM)
 			server_wlegl_create(egldisplay->display);
+
 	}
+	*configs = egldisplay->wseglDisplayConfigs;
+	*display = (WSEGLDisplayHandle)egldisplay;
+	*caps = wseglDisplayCaps;
 	return WSEGL_SUCCESS;
 }
 
