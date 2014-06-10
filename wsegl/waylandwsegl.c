@@ -82,6 +82,7 @@ wl_egl_display_create(struct wl_display *display, enum WLWSEGL_CONTEXT wlwseglCo
 	egl_display = malloc(sizeof *egl_display);
 	if (!egl_display)
 		return NULL;
+    /* TBD drm !! */
 	egl_display->display = display;
 	egl_display->wlwseglContext = wlwseglContext;
 
@@ -571,11 +572,6 @@ static WSEGLError wseglCreateWindowDrawable
     {
         struct gbm_surface* surface = (struct gbm_surface*) nativeWindow;
         wsegl_debug("wseglCreateWindowDrawable for drm called w: %u h: %u", surface->width, surface->height);
-
-        /* Let's create a fake wl_egl_window to simplify code */
-        nativeWindow = wl_egl_window_create(NULL, surface->width, surface->height);
-        nativeWindow->format = getwseglgbmPixelFormat(surface->format);
-        nativeWindow->display = egldisplay;
     }
     *drawable = (WSEGLDrawableHandle) nativeWindow; /* Reuse the egldisplay */
     *rotationAngle = WSEGL_ROTATE_0;
