@@ -334,6 +334,21 @@ int wayland_roundtrip(struct wl_egl_display *display)
     return ret;
 }
 
+static void wseglSetDisplayFormat(struct wl_egl_display *egldisplay)
+{
+    /* have not found a proper way to translate ABGR8888 to pvr2format so pin ARGB8888 */
+    if (egldisplay->displayInfo.eFormat == WSEGL_PIXELFORMAT_ABGR8888)
+    {
+        egldisplay->wseglDisplayConfigs[0].ePixelFormat = WSEGL_PIXELFORMAT_ARGB8888;
+        egldisplay->wseglDisplayConfigs[1].ePixelFormat = WSEGL_PIXELFORMAT_ARGB8888;
+    }
+    else
+    {
+        egldisplay->wseglDisplayConfigs[0].ePixelFormat = egldisplay->displayInfo.eFormat;
+        egldisplay->wseglDisplayConfigs[1].ePixelFormat = egldisplay->displayInfo.eFormat;
+    }
+}
+
 /* Initialize a native display for use with WSEGL */
 static WSEGLError wseglInitializeDisplay
     (NativeDisplayType nativeDisplay, WSEGLDisplayHandle *display,
@@ -377,18 +392,7 @@ static WSEGLError wseglInitializeDisplay
 				return WSEGL_CANNOT_INITIALISE;
 			}
 			egldisplay->fd = fd;
-
-            /* have not found a proper way to translate ABGR8888 to pvr2format so pin ARGB8888 */
-            if (egldisplay->displayInfo.eFormat == WSEGL_PIXELFORMAT_ABGR8888)
-            {
-                egldisplay->wseglDisplayConfigs[0].ePixelFormat = WSEGL_PIXELFORMAT_ARGB8888;
-                egldisplay->wseglDisplayConfigs[1].ePixelFormat = WSEGL_PIXELFORMAT_ARGB8888;
-            }
-            else
-            {
-                egldisplay->wseglDisplayConfigs[0].ePixelFormat = egldisplay->displayInfo.eFormat;
-                egldisplay->wseglDisplayConfigs[1].ePixelFormat = egldisplay->displayInfo.eFormat;
-            }
+            wseglSetDisplayFormat(egldisplay);
 		}
 		else
 		{
@@ -408,7 +412,8 @@ static WSEGLError wseglInitializeDisplay
 	{
 		wsegl_info("wseglInitializeDisplay for drm/gbm");
 		//struct gbm_device *gbm = (struct gbm_device *)nativeDisplay;
-		// TBD: update wseglDisplayConfigs
+
+        wseglSetDisplayFormat(egldisplay);
 
 	}
 	*configs = egldisplay->wseglDisplayConfigs;
