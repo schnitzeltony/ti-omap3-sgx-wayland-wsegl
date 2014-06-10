@@ -179,21 +179,6 @@ static void wseglReleaseContext(struct wl_egl_display *nativeDisplay)
    }
 }
 
-static PVR2DFORMAT wsegl2pvr2dformat(WSEGLPixelFormat format)
-{
-    switch (format)
-    {
-       case WSEGL_PIXELFORMAT_565:
-          return PVR2D_RGB565;
-       case WSEGL_PIXELFORMAT_4444:
-          return PVR2D_ARGB4444;
-       case WSEGL_PIXELFORMAT_8888:
-          return PVR2D_ARGB8888;
-       default:
-          assert(0);
-    }
-}
-
 /* Determine if nativeDisplay is a valid display handle */
 static WSEGLError wseglIsDisplayValid(NativeDisplayType nativeDisplay)
 {
@@ -212,6 +197,39 @@ static WSEGLError wseglIsDisplayValid(NativeDisplayType nativeDisplay)
 }
 
 /* Helper routines for pixel formats */
+static PVR2DFORMAT wsegl2pvr2dformat(WSEGLPixelFormat format)
+{
+    switch (format)
+    {
+        case WSEGL_PIXELFORMAT_RGB565:
+            return PVR2D_RGB565;
+        case WSEGL_PIXELFORMAT_ARGB1555:
+            return PVR2D_ARGB1555;
+        case WSEGL_PIXELFORMAT_ARGB4444:
+            return PVR2D_ARGB4444;
+        case WSEGL_PIXELFORMAT_ARGB8888:
+            return PVR2D_ARGB8888;
+        case WSEGL_PIXELFORMAT_YUYV:
+            return PVR2D_YUV422_YUYV;
+        case WSEGL_PIXELFORMAT_UYVY:
+            return PVR2D_YUV422_UYVY;
+
+        case WSEGL_PIXELFORMAT_ABGR8888:
+            wsegl_info ("WSEGL_PIXELFORMAT_ABGR8888 is not supported!");
+            break;
+        case WSEGL_PIXELFORMAT_XBGR8888:
+            wsegl_info ("WSEGL_PIXELFORMAT_XBGR8888 is not supported!");
+            break;
+        case WSEGL_PIXELFORMAT_XRGB8888:
+            wsegl_info ("WSEGL_PIXELFORMAT_XRGB8888 is not supported!");
+            break;
+        default:
+            wsegl_info ("unknown WSEGL_PIXELFORMAT!");
+            break;
+    }
+    assert(0);
+}
+
 static WSEGLPixelFormat getwseglgbmPixelFormat(uint32_t gbm_format)
 {
     switch (gbm_format)
@@ -246,12 +264,33 @@ static WSEGLPixelFormat getwseglgbmPixelFormat(uint32_t gbm_format)
             return WSEGL_PIXELFORMAT_UYVY;
 
         case GBM_FORMAT_NV12:
-            return WSEGL_PIXELFORMAT_NV12;
-
+            wsegl_info ("GBM_FORMAT_NV12 is not supported!");
+            break;
         case GBM_FORMAT_NV21:
-            return WSEGL_PIXELFORMAT_NV21;
+            wsegl_info ("GBM_FORMAT_NV21 is not supported!");
+            break;
     }
-    return -1;
+    assert(0);
+}
+
+int wseglPixelFormatBytesPP(WSEGLPixelFormat format)
+{
+    switch(format)
+    {
+        case WSEGL_PIXELFORMAT_RGB565:
+        case WSEGL_PIXELFORMAT_ARGB1555:
+        case WSEGL_PIXELFORMAT_ARGB4444:
+            return 2;
+        case WSEGL_PIXELFORMAT_XRGB8888:
+        case WSEGL_PIXELFORMAT_XBGR8888:
+        case WSEGL_PIXELFORMAT_ARGB8888:
+        case WSEGL_PIXELFORMAT_ABGR8888:
+        case WSEGL_PIXELFORMAT_YUYV:
+        case WSEGL_PIXELFORMAT_UYVY:
+            return 4;
+        default:
+            assert(0);
+    }
 }
 
 static void registry_handle_global(void *data, struct wl_registry *registry, uint32_t name,
@@ -339,8 +378,17 @@ static WSEGLError wseglInitializeDisplay
 			}
 			egldisplay->fd = fd;
 
-			egldisplay->wseglDisplayConfigs[0].ePixelFormat = egldisplay->displayInfo.eFormat;
-			egldisplay->wseglDisplayConfigs[1].ePixelFormat = egldisplay->displayInfo.eFormat;
+            /* have not found a proper way to translate ABGR8888 to pvr2format so pin ARGB8888 */
+            if (egldisplay->displayInfo.eFormat == WSEGL_PIXELFORMAT_ABGR8888)
+            {
+                egldisplay->wseglDisplayConfigs[0].ePixelFormat = WSEGL_PIXELFORMAT_ARGB8888;
+                egldisplay->wseglDisplayConfigs[1].ePixelFormat = WSEGL_PIXELFORMAT_ARGB8888;
+            }
+            else
+            {
+                egldisplay->wseglDisplayConfigs[0].ePixelFormat = egldisplay->displayInfo.eFormat;
+                egldisplay->wseglDisplayConfigs[1].ePixelFormat = egldisplay->displayInfo.eFormat;
+            }
 		}
 		else
 		{
@@ -434,20 +482,6 @@ static WSEGLError allocateBackBuffers(struct wl_egl_display *egldisplay, NativeW
     nativeWindow->currentBackBuffer = 0;
     return WSEGL_SUCCESS;
 }
-
-
-int wseglPixelFormatBytesPP(WSEGLPixelFormat format)
-{
-    if (format == WSEGL_PIXELFORMAT_565)
-       return 2;
-    else
-    if (format == WSEGL_PIXELFORMAT_8888)
-       return 4;
-    else
-       assert(0);
-   
-}
-
 
 /* Create the WSEGL drawable version of a native window */
 static WSEGLError wseglCreateWindowDrawable
