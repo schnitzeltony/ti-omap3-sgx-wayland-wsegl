@@ -212,33 +212,6 @@ static WSEGLError wseglIsDisplayValid(NativeDisplayType nativeDisplay)
 }
 
 /* Helper routines for pixel formats */
-static WSEGLPixelFormat getwseglPixelFormat(struct wl_egl_display *egldisplay)
-{
-       if (egldisplay->var.bits_per_pixel == 16) {
-          if (egldisplay->var.red.length == 5 && egldisplay->var.green.length == 6 &&
-              egldisplay->var.blue.length == 5 && egldisplay->var.red.offset == 11 &&
-              egldisplay->var.green.offset == 5 && egldisplay->var.blue.offset == 0) {
-              return WSEGL_PIXELFORMAT_565;
-          }
-          if (egldisplay->var.red.length == 4 && egldisplay->var.green.length == 4 &&
-              egldisplay->var.blue.length == 4 && egldisplay->var.transp.length == 4 &&
-              egldisplay->var.red.offset == 8 && egldisplay->var.green.offset == 4 &&
-              egldisplay->var.blue.offset == 0 && egldisplay->var.transp.offset == 12) {
-              return WSEGL_PIXELFORMAT_4444;
-          }
-       } else if (egldisplay->var.bits_per_pixel == 32) {
-          if (egldisplay->var.red.length == 8 && egldisplay->var.green.length == 8 &&
-              egldisplay->var.blue.length == 8 && egldisplay->var.transp.length == 8 &&
-              egldisplay->var.red.offset == 16 && egldisplay->var.green.offset == 8 &&
-              egldisplay->var.blue.offset == 0 && egldisplay->var.transp.offset == 24) {
-              return WSEGL_PIXELFORMAT_8888;
-          }
-       }
-       else
-        assert(0);  
-    return WSEGL_SUCCESS;
-}
-
 static WSEGLPixelFormat getwseglgbmPixelFormat(uint32_t gbm_format)
 {
     switch (gbm_format)
@@ -335,6 +308,18 @@ static WSEGLError wseglInitializeDisplay
 		wl_egl_display_destroy(egldisplay);
 		return WSEGL_OUT_OF_MEMORY;
 	}
+
+    assert(PVR2DGetDeviceInfo(egldisplay->context, &egldisplay->displayInfo) == PVR2D_OK);
+
+    wsegl_debug("ulMaxFlipChains: %lu", egldisplay->displayInfo.ulMaxFlipChains);
+    wsegl_debug("ulMaxBuffersInChain: %lu", egldisplay->displayInfo.ulMaxBuffersInChain);
+    wsegl_debug("eFormat: %d", egldisplay->displayInfo.eFormat);
+    wsegl_debug("ulWidth: %lu", egldisplay->displayInfo.ulWidth);
+    wsegl_debug("ulHeight: %lu", egldisplay->displayInfo.ulHeight);
+    wsegl_debug("lStride: %lu", egldisplay->displayInfo.lStride);
+    wsegl_debug("ulMinFlipInterval: %lu", egldisplay->displayInfo.ulMinFlipInterval);
+    wsegl_debug("ulMaxFlipInterval: %lu", egldisplay->displayInfo.ulMaxFlipInterval);
+
 	/* egl-server / client */
 	if (wlwseglContext != WLWSEGL_CONTEXT_SERVER_DRM)
 	{
@@ -343,7 +328,6 @@ static WSEGLError wseglInitializeDisplay
 		{
 			wsegl_info("wayland-wsegl: Initializing framebuffer");
 			int fd;
-			WSEGLPixelFormat format;
 
 			/* Open the framebuffer and fetch its properties */
 			fd = open("/dev/fb0", O_RDWR, 0);
@@ -353,18 +337,10 @@ static WSEGLError wseglInitializeDisplay
 				wl_egl_display_destroy(egldisplay);
 				return WSEGL_CANNOT_INITIALISE;
 			}
-			if (ioctl(fd, FBIOGET_VSCREENINFO, &egldisplay->var) < 0) {
-				perror("FBIOGET_VSCREENINFO");
-				wseglReleaseContext(egldisplay);
-				wl_egl_display_destroy(egldisplay);
-				close(fd);
-				return WSEGL_CANNOT_INITIALISE; 
-			}
 			egldisplay->fd = fd;
-			format = getwseglPixelFormat(egldisplay);
 
-			egldisplay->wseglDisplayConfigs[0].ePixelFormat = format;
-			egldisplay->wseglDisplayConfigs[1].ePixelFormat = format;
+			egldisplay->wseglDisplayConfigs[0].ePixelFormat = egldisplay->displayInfo.eFormat;
+			egldisplay->wseglDisplayConfigs[1].ePixelFormat = egldisplay->displayInfo.eFormat;
 		}
 		else
 		{
@@ -480,8 +456,7 @@ static WSEGLError wseglCreateWindowDrawable
      WSEGLRotationAngle *rotationAngle)
 {
     struct wl_egl_display *egldisplay = (struct wl_egl_display *) display;
-    PVR2DDISPLAYINFO displayInfo;
-    
+
     if (WLWSEGLGetEglContext() != WLWSEGL_CONTEXT_SERVER_DRM)
     /*if (egldisplay->wlwseglContext != WLWSEGL_CONTEXT_SERVER_DRM)*/
     {
@@ -494,24 +469,13 @@ static WSEGLError wseglCreateWindowDrawable
            assert(egldisplay->display == NULL);
 
            /* Let's create a fake wl_egl_window to simplify code */
-           nativeWindow = wl_egl_window_create(NULL, egldisplay->var.xres, egldisplay->var.yres);
+           nativeWindow = wl_egl_window_create(NULL, egldisplay->displayInfo.ulWidth, egldisplay->displayInfo.ulHeight);
            assert(egldisplay->wseglDisplayConfigs[0].ePixelFormat == egldisplay->wseglDisplayConfigs[1].ePixelFormat);
            nativeWindow->format = egldisplay->wseglDisplayConfigs[0].ePixelFormat;
            nativeWindow->display = egldisplay;
 
-           assert(PVR2DGetDeviceInfo(egldisplay->context, &displayInfo) == PVR2D_OK);
-
-           wsegl_debug("ulMaxFlipChains: %lu", displayInfo.ulMaxFlipChains);
-           wsegl_debug("ulMaxBuffersInChain: %lu", displayInfo.ulMaxBuffersInChain);
-           wsegl_debug("eFormat: %d", displayInfo.eFormat);
-           wsegl_debug("ulWidth: %lu", displayInfo.ulWidth);
-           wsegl_debug("ulHeight: %lu", displayInfo.ulHeight);
-           wsegl_debug("lStride: %lu", displayInfo.lStride);
-           wsegl_debug("ulMinFlipInterval: %lu", displayInfo.ulMinFlipInterval);
-           wsegl_debug("ulMaxFlipInterval: %lu", displayInfo.ulMaxFlipInterval);
-
-           if (displayInfo.ulMaxFlipChains > 0 && displayInfo.ulMaxBuffersInChain > 0)
-                  nativeWindow->numFlipBuffers = displayInfo.ulMaxBuffersInChain;
+           if (egldisplay->displayInfo.ulMaxFlipChains > 0 && egldisplay->displayInfo.ulMaxBuffersInChain > 0)
+                  nativeWindow->numFlipBuffers = egldisplay->displayInfo.ulMaxBuffersInChain;
            if (nativeWindow->numFlipBuffers > WAYLANDWSEGL_MAX_FLIP_BUFFERS)
                   nativeWindow->numFlipBuffers = WAYLANDWSEGL_MAX_FLIP_BUFFERS;
 
@@ -573,17 +537,6 @@ static WSEGLError wseglCreateWindowDrawable
         nativeWindow = wl_egl_window_create(NULL, surface->width, surface->height);
         nativeWindow->format = getwseglgbmPixelFormat(surface->format);
         nativeWindow->display = egldisplay;
-
-        assert(PVR2DGetDeviceInfo(egldisplay->context, &displayInfo) == PVR2D_OK);
-
-        wsegl_debug("ulMaxFlipChains: %lu", displayInfo.ulMaxFlipChains);
-        wsegl_debug("ulMaxBuffersInChain: %lu", displayInfo.ulMaxBuffersInChain);
-        wsegl_debug("eFormat: %d", displayInfo.eFormat);
-        wsegl_debug("ulWidth: %lu", displayInfo.ulWidth);
-        wsegl_debug("ulHeight: %lu", displayInfo.ulHeight);
-        wsegl_debug("lStride: %lu", displayInfo.lStride);
-        wsegl_debug("ulMinFlipInterval: %lu", displayInfo.ulMinFlipInterval);
-        wsegl_debug("ulMaxFlipInterval: %lu", displayInfo.ulMaxFlipInterval);
     }
     *drawable = (WSEGLDrawableHandle) nativeWindow; /* Reuse the egldisplay */
     *rotationAngle = WSEGL_ROTATE_0;

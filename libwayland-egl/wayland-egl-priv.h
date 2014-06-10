@@ -78,8 +78,8 @@ struct wl_egl_display {
 	bool authenticated;
 	int context_refcnt;
 	PVR2DCONTEXTHANDLE context;
+    PVR2DDISPLAYINFO displayInfo;
 	WSEGLConfig wseglDisplayConfigs[3];
-	struct fb_var_screeninfo var;
 	struct wl_queue *queue;
 	struct wl_callback *frame_callback;
 	struct wl_registry *registry;
