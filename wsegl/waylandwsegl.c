@@ -451,7 +451,8 @@ static WSEGLError wseglCreateWindowDrawable
        /* Let's create a fake wl_egl_window to simplify code */
 
        nativeWindow = wl_egl_window_create(NULL, egldisplay->var.xres, egldisplay->var.yres);
-       nativeWindow->format = getwseglPixelFormat(egldisplay);
+       assert(egldisplay->wseglDisplayConfigs[0].ePixelFormat == egldisplay->wseglDisplayConfigs[1].ePixelFormat);
+       nativeWindow->format = egldisplay->wseglDisplayConfigs[0].ePixelFormat;
        nativeWindow->display = egldisplay;
 
        assert(PVR2DGetDeviceInfo(egldisplay->context, &displayInfo) == PVR2D_OK);
