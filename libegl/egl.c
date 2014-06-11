@@ -352,6 +352,7 @@ EGLBoolean eglWaitNative(EGLint engine)
 
 EGLBoolean eglSwapBuffers(EGLDisplay dpy, EGLSurface surface)
 {
+	wsegl_debug("eglSwapBuffers for display %x", dpy);
 	EGL_DLSYM(&_eglSwapBuffers, "eglSwapBuffers");
 	return (*_eglSwapBuffers)(dpy, surface);
 }
