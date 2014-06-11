@@ -35,9 +35,11 @@ gbm_pvr_omap3_la_CFLAGS =	\
 	-I$(top_srcdir)/common	\
 	-I$(top_srcdir)/libegl	\
 	$(AM_CFLAGS) 		\
-	$(LIBDRM_CFLAGS)
+	$(DRM_CFLAGS)		\
+	$(DRMOMAP_CFLAGS)
 
 gbm_pvr_omap3_la_LDFLAGS =	\
+	$(DRMOMAP_LIBS)		\
 	-module			\
 	-no-undefined		\
 	-avoid-version

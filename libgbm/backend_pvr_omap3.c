@@ -325,39 +325,50 @@ gbm_pvr_omap3_surface_destroy(struct gbm_surface *_surf)
 static void
 gbm_pvr_omap3_destroy(struct gbm_device *gbm)
 {
-   wsegl_info("Destroy pvr_omap3 gbm device");
+    wsegl_info("Destroy pvr_omap3 gbm device");
+    struct gbm_pvr_omap3_device * gbm_pvr_device = gbm_pvr_omap3_device(gbm);
+    if (gbm_pvr_device && gbm_pvr_device->omap_drm_device) {
+        omap_device_del (gbm_pvr_device->omap_drm_device);
+        gbm_pvr_device->omap_drm_device = NULL;
+    }
 }
 
 static struct gbm_device *
 pvr_omap3_device_create(int fd)
 {
-   wsegl_info("Create pvr_omap3 gbm device");
-   struct gbm_pvr_omap3_device *dev;
-   int ret;
+    wsegl_info("Create pvr_omap3 gbm device");
+    struct gbm_pvr_omap3_device *dev;
+    int ret = 0;
 
-   dev = calloc(1, sizeof *dev);
+    dev = calloc(1, sizeof *dev);
 
-   dev->base.base.fd = fd;
-   dev->base.base.bo_create = gbm_pvr_omap3_bo_create;
-   dev->base.base.bo_import = gbm_pvr_omap3_bo_import;
-   dev->base.base.is_format_supported = gbm_pvr_omap3_is_format_supported;
-   dev->base.base.bo_write = gbm_pvr_omap3_bo_write;
-   dev->base.base.bo_get_fd = gbm_pvr_omap3_bo_get_fd;
-   dev->base.base.bo_destroy = gbm_pvr_omap3_bo_destroy;
-   dev->base.base.destroy = gbm_pvr_omap3_destroy;
-   dev->base.base.surface_create = gbm_pvr_omap3_surface_create;
-   dev->base.base.surface_destroy = gbm_pvr_omap3_surface_destroy;
+    dev->base.base.fd = fd;
+    dev->omap_drm_device = omap_device_new(fd);
+    if (dev->omap_drm_device == NULL) {
+        wsegl_info("could not create omap3 drm device!");
+        ret = 1;
+    }
 
-   dev->base.type = GBM_DRM_DRIVER_TYPE_CUSTOM;
-   dev->base.base.name = "pvr_omap3";
+    dev->base.base.bo_create = gbm_pvr_omap3_bo_create;
+    dev->base.base.bo_import = gbm_pvr_omap3_bo_import;
+    dev->base.base.is_format_supported = gbm_pvr_omap3_is_format_supported;
+    dev->base.base.bo_write = gbm_pvr_omap3_bo_write;
+    dev->base.base.bo_get_fd = gbm_pvr_omap3_bo_get_fd;
+    dev->base.base.bo_destroy = gbm_pvr_omap3_bo_destroy;
+    dev->base.base.destroy = gbm_pvr_omap3_destroy;
+    dev->base.base.surface_create = gbm_pvr_omap3_surface_create;
+    dev->base.base.surface_destroy = gbm_pvr_omap3_surface_destroy;
 
-   ret = gles_init(dev);
-   if (ret) {
-      free(dev);
-      return NULL;
-   }
+    dev->base.type = GBM_DRM_DRIVER_TYPE_CUSTOM;
+    dev->base.base.name = "pvr_omap3";
 
-   return &dev->base.base;
+    if (!ret)
+        ret = gles_init(dev);
+    if (ret) {
+        free(dev);
+        return NULL;
+    }
+    return &dev->base.base;
 }
 
 /* backend loader looks for symbol "gbm_backend" */

@@ -29,19 +29,24 @@
 
 #include "gbmint.h"
 #include "common_drm.h"
+#include <omap_drmif.h>
 
-struct gbm_pvr_omap3_device {
+struct gbm_pvr_omap3_device
+{
    struct gbm_drm_device base;
-   /* add whatever you need here */
+
+   struct omap_device *omap_drm_device;
 };
 
 
-struct gbm_pvr_omap3_bo {
+struct gbm_pvr_omap3_bo 
+{
    struct gbm_drm_bo base;
    /* add whatever you need here */
 };
 
-struct gbm_pvr_omap3_surface {
+struct gbm_pvr_omap3_surface
+{
    struct gbm_surface base;
 
    void *pvr_omap3_private;
