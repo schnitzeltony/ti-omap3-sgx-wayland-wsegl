@@ -42,4 +42,9 @@ AC_CONFIG_FILES([Makefile
 		libwayland-egl/Makefile
 		libwayland-egl/wayland-egl.pc
 		wsegl/Makefile])
+
+# We generate the protocol files and need to tell automake/autoconf to include
+# them from the builddir
+AC_SUBST([AM_CPPFLAGS], [-I\$\(top_builddir\)/common])
+
 AC_OUTPUT
