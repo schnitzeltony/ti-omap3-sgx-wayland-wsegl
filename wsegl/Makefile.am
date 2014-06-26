@@ -19,3 +19,4 @@ waylandwsegl_la_LDFLAGS = \
 	-no-undefined 	\
 	-avoid-version
 
+sysconf_DATA = powervr.ini
